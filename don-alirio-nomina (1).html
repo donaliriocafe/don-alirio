@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Don Alirio">
+<meta name="theme-color" content="#3B1F0A">
+<title>Don Alirio · Control de Personal</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Don Alirio&quot;,&quot;short_name&quot;:&quot;Don Alirio&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#3B1F0A&quot;,&quot;theme_color&quot;:&quot;#3B1F0A&quot;}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--cafe:#3B1F0A;--cafe-medio:#6B3A1F;--dorado:#C8922A;--dorado-light:#E8B84B;--crema:#F5EDD9;--crema2:#EDE0C4;--verde:#2D5016;--verde-claro:#4A7C2F;--rojo:#C0392B;--azul:#1A5276;--blanco:#FDFAF5;--sombra:rgba(59,31,10,0.15);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cafe);min-height:100vh;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+#screen-empleado{background:linear-gradient(160deg,var(--cafe) 0%,#5C2E0E 100%);align-items:center;justify-content:flex-start;padding:26px 18px;}
+.emp-header{text-align:center;margin-bottom:20px;width:100%;}
+.emp-logo{width:64px;height:64px;background:var(--dorado);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px;box-shadow:0 4px 20px rgba(200,146,42,0.4);}
+.emp-header h1{font-family:'Playfair Display',serif;color:var(--crema);font-size:1.45rem;}
+.emp-header p{color:var(--dorado-light);font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.clock-box{background:rgba(255,255,255,0.06);border:1px solid rgba(200,146,42,0.3);border-radius:13px;padding:12px 16px;text-align:center;width:100%;margin-bottom:16px;}
+.clock-big{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--crema);letter-spacing:3px;line-height:1;}
+.clock-date{color:var(--dorado-light);font-size:0.74rem;margin-top:4px;text-transform:capitalize;}
+.emp-card{background:white;border-radius:16px;padding:18px 15px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.emp-card label{font-size:0.68rem;font-weight:700;color:var(--cafe-medio);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;}
+.emp-card select{width:100%;padding:11px 12px;border:2px solid var(--crema2);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:0.94rem;color:var(--cafe);background:var(--blanco);margin-bottom:12px;}
+.btn-continuar{width:100%;padding:13px;background:var(--dorado);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;letter-spacing:1px;text-transform:uppercase;}
+.btn-continuar:active{background:var(--cafe);}
+#step-pin-emp{width:100%;display:none;}
+.pin-emp-box{background:white;border-radius:16px;padding:20px 15px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.pin-emp-avatar{width:50px;height:50px;border-radius:50%;background:var(--dorado);color:white;font-weight:700;font-size:1.1rem;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;}
+.pin-emp-nombre{font-family:'Playfair Display',serif;font-size:1.02rem;color:var(--cafe);margin-bottom:2px;}
+.pin-emp-sub{font-size:0.71rem;color:var(--cafe-medio);margin-bottom:14px;}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--crema2);background:white;transition:all 0.13s;}
+.pin-dot.filled{background:var(--cafe);border-color:var(--cafe);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px;}
+.pin-key{padding:14px 8px;border:2px solid var(--crema2);border-radius:9px;background:var(--blanco);font-size:1.1rem;font-weight:700;color:var(--cafe);cursor:pointer;transition:all 0.11s;font-family:'DM Sans',sans-serif;}
+.pin-key:active{background:var(--cafe);color:white;border-color:var(--cafe);transform:scale(0.93);}
+.pin-key.del{color:var(--rojo);font-size:0.9rem;}
+.pin-key.empty{background:transparent;border-color:transparent;cursor:default;}
+.pin-emp-error{color:var(--rojo);font-size:0.76rem;min-height:16px;font-weight:600;margin-bottom:8px;}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.btn-accion{padding:12px 6px;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:0.81rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.7px;}
+.btn-entrada{background:var(--verde);color:white;}
+.btn-salida{background:var(--rojo);color:white;}
+.btn-volver{width:100%;padding:8px;background:none;border:1px solid var(--crema2);border-radius:7px;color:var(--cafe-medio);font-size:0.76rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px;}
+.emp-msg{padding:9px 12px;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:12px;display:none;text-align:center;}
+.emp-msg.show{display:block;}
+.msg-ok{background:#d4edda;color:#155724;}
+.msg-err{background:#f8d7da;color:#721c24;}
+.msg-warn{background:#fff3cd;color:#856404;}
+.msg-info{background:#d1ecf1;color:#0c5460;}
+.admin-link{margin-top:16px;}
+.admin-link button{background:none;border:none;color:rgba(255,255,255,0.2);font-size:0.67rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;padding:8px;}
+#screen-pin{background:var(--cafe);align-items:center;justify-content:center;padding:28px 18px;}
+.pin-admin-box{background:white;border-radius:18px;padding:26px 20px;width:100%;max-width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.pin-admin-box h2{font-family:'Playfair Display',serif;color:var(--cafe);font-size:1.18rem;margin-bottom:3px;}
+.pin-admin-box p{color:var(--cafe-medio);font-size:0.74rem;margin-bottom:18px;}
+.pin-error{color:var(--rojo);font-size:0.74rem;margin-top:8px;min-height:16px;font-weight:600;}
+.pin-back{margin-top:12px;background:none;border:none;color:var(--cafe-medio);font-size:0.74rem;cursor:pointer;text-decoration:underline;}
+#screen-admin{background:var(--blanco);}
+.admin-header{background:linear-gradient(135deg,var(--cafe) 0%,var(--cafe-medio) 100%);padding:13px 14px;display:flex;align-items:center;gap:9px;border-bottom:3px solid var(--dorado);flex-shrink:0;}
+.admin-header .logo-sm{width:32px;height:32px;background:var(--dorado);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.admin-header h1{font-family:'Playfair Display',serif;color:var(--crema);font-size:0.95rem;flex:1;}
+.sync-indicator{font-size:0.65rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:4px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.sync-dot.ok{background:#4CAF50;}
+.sync-dot.syncing{background:var(--dorado-light);animation:pulse 1s infinite;}
+.sync-dot.err{background:var(--rojo);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.logout-btn{background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);color:var(--crema);font-size:0.66rem;padding:5px 9px;border-radius:16px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-left:6px;}
+.tabs{display:flex;background:var(--cafe-medio);border-bottom:2px solid var(--dorado);overflow-x:auto;flex-shrink:0;}
+.tab-btn{flex:1;min-width:55px;padding:9px 3px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:700;color:var(--crema2);text-transform:uppercase;letter-spacing:0.6px;border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{color:var(--dorado);border-bottom-color:var(--dorado);}
+.tab-content{flex:1;overflow-y:auto;}
+.section{display:none;padding:14px 12px;}
+.section.active{display:block;}
+.card{background:white;border-radius:10px;box-shadow:0 2px 10px var(--sombra);padding:13px;margin-bottom:11px;border-left:4px solid var(--dorado);}
+.card-title{font-family:'Playfair Display',serif;font-size:0.88rem;color:var(--cafe);margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.section-title{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--cafe);margin-bottom:9px;padding-bottom:6px;border-bottom:2px solid var(--crema2);}
+label{font-size:0.67rem;font-weight:700;color:var(--cafe-medio);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;}
+select,input[type=text],input[type=number],input[type=date],input[type=password],input[type=time],input[type=month]{width:100%;padding:8px 10px;border:1.5px solid var(--crema2);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--cafe);background:var(--blanco);margin-bottom:9px;transition:border-color 0.2s;}
+select:focus,input:focus{outline:none;border-color:var(--dorado);}
+.btn{padding:10px 14px;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.77rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.7px;width:100%;margin-bottom:6px;}
+.btn-dorado{background:var(--dorado);color:white;}
+.btn-dorado:hover{background:var(--cafe);}
+.btn-verde{background:var(--verde);color:white;}
+.btn-azul{background:var(--azul);color:white;}
+.btn-rojo{background:var(--rojo);color:white;}
+.btn-outline{background:transparent;color:var(--cafe);border:2px solid var(--crema2);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.divider{height:1px;background:var(--crema2);margin:10px 0;}
+.info-box{background:var(--crema);border-radius:7px;padding:9px;font-size:0.71rem;color:var(--cafe-medio);margin-bottom:9px;}
+.info-box strong{color:var(--cafe);}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px;}
+.stat-box{background:white;border-radius:8px;padding:11px 8px;text-align:center;box-shadow:0 2px 8px var(--sombra);border-top:3px solid var(--dorado);}
+.stat-val{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--cafe);font-weight:700;}
+.stat-lbl{font-size:0.59rem;color:var(--cafe-medio);text-transform:uppercase;letter-spacing:0.7px;font-weight:600;}
+.scroll-x{overflow-x:auto;}
+.nom-table{width:100%;border-collapse:collapse;font-size:0.76rem;min-width:300px;}
+.nom-table th{background:var(--cafe);color:var(--crema);padding:6px 7px;text-align:left;font-size:0.63rem;text-transform:uppercase;}
+.nom-table td{padding:6px 7px;border-bottom:1px solid var(--crema2);}
+.nom-table .subtotal-row td{font-weight:700;color:var(--cafe);background:var(--crema);}
+.nom-table .desc-row td{color:var(--rojo);}
+.nom-table .plus-row td{color:var(--verde);}
+.nom-table .neto-row td{font-weight:700;color:var(--verde);background:#f0fff4;font-size:0.85rem;}
+.precio{text-align:right;font-weight:600;}
+.hist-item{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 10px;border-radius:7px;background:var(--blanco);margin-bottom:5px;border-left:3px solid var(--crema2);font-size:0.78rem;}
+.hist-item.entrada{border-left-color:var(--verde);}
+.hist-item.salida{border-left-color:var(--rojo);}
+.hist-item.manual{border-left-color:var(--azul);}
+.hist-fecha{font-size:0.66rem;color:var(--cafe-medio);}
+.emp-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;background:var(--blanco);margin-bottom:6px;border:1.5px solid var(--crema2);}
+.emp-row.trabajando{border-color:var(--verde);background:#f0fff4;}
+.emp-row.alerta{border-color:var(--rojo);background:#fff5f5;}
+.emp-avatar{width:32px;height:32px;border-radius:50%;background:var(--dorado);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;flex-shrink:0;}
+.emp-info{flex:1;}
+.emp-name{font-weight:600;font-size:0.83rem;color:var(--cafe);}
+.emp-detail{font-size:0.66rem;color:var(--cafe-medio);}
+.emp-horas{font-weight:700;font-size:0.77rem;color:var(--verde);}
+.emp-horas.over{color:var(--rojo);}
+.emp-config-row{display:flex;align-items:flex-start;gap:8px;padding:10px;border-radius:8px;background:white;margin-bottom:6px;border:1.5px solid var(--crema2);}
+.delete-btn{background:none;border:none;cursor:pointer;color:var(--rojo);font-size:0.92rem;padding:2px;margin-top:1px;}
+.pin-badge{background:var(--cafe);color:var(--dorado-light);font-size:0.6rem;padding:2px 6px;border-radius:8px;font-weight:700;}
+.no-pin-badge{background:var(--rojo);color:white;font-size:0.58rem;padding:2px 6px;border-radius:8px;font-weight:700;}
+.export-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px;}
+.btn-export{padding:9px 6px;border:2px solid;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.71rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:4px;}
+.btn-export-excel{border-color:#1e7145;color:#1e7145;background:white;}
+.btn-export-excel:hover{background:#1e7145;color:white;}
+.btn-export-pdf{border-color:var(--rojo);color:var(--rojo);background:white;}
+.btn-export-pdf:hover{background:var(--rojo);color:white;}
+.msg-inline{font-size:0.74rem;font-weight:600;padding:6px 8px;border-radius:6px;margin-top:4px;display:none;}
+.msg-inline.show{display:block;}
+.desc-section{background:var(--crema);border-radius:8px;padding:11px;margin-bottom:10px;border:1.5px solid var(--crema2);}
+.desc-section h4{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--cafe);margin-bottom:8px;}
+.desc-row-input{display:flex;gap:6px;margin-bottom:6px;align-items:flex-end;}
+.desc-row-input input{flex:1;margin-bottom:0;}
+.desc-row-input input[type=number]{width:100px;flex:none;}
+.desc-row-input button{flex-shrink:0;padding:8px 10px;background:var(--rojo);color:white;border:none;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;}
+.desc-item{display:flex;justify-content:space-between;align-items:center;padding:5px 7px;background:white;border-radius:5px;margin-bottom:4px;font-size:0.78rem;border-left:3px solid var(--rojo);}
+.desc-item button{background:none;border:none;color:var(--rojo);cursor:pointer;font-size:0.82rem;padding:0 2px;}
+.auxilio-check{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
+.auxilio-check input[type=checkbox]{width:17px;height:17px;accent-color:var(--verde);flex-shrink:0;}
+.auxilio-check label{font-size:0.8rem;color:var(--cafe);text-transform:none;letter-spacing:0;margin:0;font-weight:500;}
+.tienda-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;}
+.tienda-tab{padding:6px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:2px solid var(--crema2);background:white;color:var(--cafe-medio);cursor:pointer;white-space:nowrap;}
+.tienda-tab.active{background:var(--cafe);color:var(--dorado);border-color:var(--cafe);}
+.semana-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px;}
+.dia-box{background:white;border-radius:6px;padding:6px 3px;text-align:center;border:1.5px solid var(--crema2);font-size:0.62rem;}
+.dia-box .dia-nombre{color:var(--cafe-medio);font-weight:700;text-transform:uppercase;margin-bottom:3px;}
+.dia-box .dia-horas{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--cafe);font-weight:700;}
+.dia-box.hoy{border-color:var(--dorado);}
+.dia-box.over .dia-horas{color:var(--rojo);}
+.dia-box.ok .dia-horas{color:var(--verde);}
+.nomina-guardada{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;background:white;margin-bottom:6px;border:1.5px solid var(--crema2);cursor:pointer;}
+.nomina-guardada:hover{border-color:var(--dorado);}
+.nom-icon{width:30px;height:30px;border-radius:50%;background:var(--dorado);color:white;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;}
+.quincena-btn{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px;}
+.alerta-badge{background:var(--rojo);color:white;font-size:0.6rem;padding:2px 6px;border-radius:8px;font-weight:700;margin-left:5px;}
+.cumple-badge{background:#E8B84B;color:var(--cafe);font-size:0.6rem;padding:2px 6px;border-radius:8px;font-weight:700;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:white;border-radius:16px 16px 0 0;padding:22px 18px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;}
+.modal-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--cafe);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--cafe-medio);}
+
+/* SYNC BANNER */
+.sync-banner{background:var(--azul);color:white;padding:8px 14px;font-size:0.75rem;font-weight:600;text-align:center;display:none;}
+.sync-banner.show{display:block;}
+.sync-banner.err{background:var(--rojo);}
+.sync-banner.ok{background:var(--verde);}
+
+/* OFFLINE badge */
+.offline-badge{background:var(--rojo);color:white;font-size:0.62rem;padding:2px 7px;border-radius:8px;font-weight:700;}
+.online-badge{background:var(--verde);color:white;font-size:0.62rem;padding:2px 7px;border-radius:8px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA EMPLEADO -->
+<div id="screen-empleado" class="screen active">
+  <div class="emp-header">
+    <div class="emp-logo">☕</div>
+    <h1>Don Alirio</h1>
+    <p>Café de Origen · Registro de turno</p>
+  </div>
+  <div class="clock-box">
+    <div class="clock-big" id="emp-clock">--:--:--</div>
+    <div class="clock-date" id="emp-date">--</div>
+  </div>
+  <div id="step-select">
+    <div class="emp-card">
+      <div id="emp-msg-sel" class="emp-msg"></div>
+      <label>¿Quién eres?</label>
+      <select id="sel-emp"><option value="">— Selecciona tu nombre —</option></select>
+      <label>Tienda</label>
+      <select id="sel-tienda">
+        <option value="El Dorado">El Dorado – Envigado</option>
+        <option value="Sofasa 1">Sofasa – Tienda 1</option>
+        <option value="Sofasa 2">Sofasa – Tienda 2</option>
+      </select>
+      <button class="btn-continuar" onclick="irAlPin()">Continuar →</button>
+    </div>
+  </div>
+  <div id="step-pin-emp">
+    <div id="emp-msg" class="emp-msg"></div>
+    <div class="pin-emp-box">
+      <div class="pin-emp-avatar" id="emp-avatar-pin">--</div>
+      <div class="pin-emp-nombre" id="emp-nombre-pin">--</div>
+      <div class="pin-emp-sub">Ingresa tu PIN de 4 dígitos</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="edot-0"></div><div class="pin-dot" id="edot-1"></div>
+        <div class="pin-dot" id="edot-2"></div><div class="pin-dot" id="edot-3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="empPinPress('1')">1</button><button class="pin-key" onclick="empPinPress('2')">2</button><button class="pin-key" onclick="empPinPress('3')">3</button>
+        <button class="pin-key" onclick="empPinPress('4')">4</button><button class="pin-key" onclick="empPinPress('5')">5</button><button class="pin-key" onclick="empPinPress('6')">6</button>
+        <button class="pin-key" onclick="empPinPress('7')">7</button><button class="pin-key" onclick="empPinPress('8')">8</button><button class="pin-key" onclick="empPinPress('9')">9</button>
+        <button class="pin-key empty"></button><button class="pin-key" onclick="empPinPress('0')">0</button><button class="pin-key del" onclick="empPinDel()">⌫</button>
+      </div>
+      <div class="pin-emp-error" id="emp-pin-error"></div>
+      <div class="btn-grid">
+        <button class="btn-accion btn-entrada" onclick="registrarMov('entrada')">✅ Entrada</button>
+        <button class="btn-accion btn-salida" onclick="registrarMov('salida')">🚪 Salida</button>
+      </div>
+      <button class="btn-volver" onclick="volverSelect()">← Cambiar empleado</button>
+    </div>
+  </div>
+  <div class="admin-link"><button onclick="showPinAdmin()">⚙ Administrador</button></div>
+</div>
+
+<!-- PIN ADMIN -->
+<div id="screen-pin" class="screen">
+  <div class="pin-admin-box">
+    <div style="font-size:1.6rem;margin-bottom:6px">🔐</div>
+    <h2>Área Administrativa</h2>
+    <p>Ingresa tu PIN de administrador</p>
+    <div class="pin-dots"><div class="pin-dot" id="adot-0"></div><div class="pin-dot" id="adot-1"></div><div class="pin-dot" id="adot-2"></div><div class="pin-dot" id="adot-3"></div></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="adminPinPress('1')">1</button><button class="pin-key" onclick="adminPinPress('2')">2</button><button class="pin-key" onclick="adminPinPress('3')">3</button>
+      <button class="pin-key" onclick="adminPinPress('4')">4</button><button class="pin-key" onclick="adminPinPress('5')">5</button><button class="pin-key" onclick="adminPinPress('6')">6</button>
+      <button class="pin-key" onclick="adminPinPress('7')">7</button><button class="pin-key" onclick="adminPinPress('8')">8</button><button class="pin-key" onclick="adminPinPress('9')">9</button>
+      <button class="pin-key empty"></button><button class="pin-key" onclick="adminPinPress('0')">0</button><button class="pin-key del" onclick="adminPinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="admin-pin-error"></div>
+    <button class="pin-back" onclick="goEmpleado()">← Volver al registro</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="sync-banner" id="sync-banner"></div>
+  <div class="admin-header">
+    <div class="logo-sm">☕</div>
+    <h1>Don Alirio · Admin</h1>
+    <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">--</span></div>
+    <button class="logout-btn" onclick="logout()">Salir</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">📊 Inicio</button>
+    <button class="tab-btn" onclick="showTab('historial')">📋 Historial</button>
+    <button class="tab-btn" onclick="showTab('nomina')">💰 Nómina</button>
+    <button class="tab-btn" onclick="showTab('tiendas')">🏪 Tiendas</button>
+    <button class="tab-btn" onclick="showTab('empleados')">👤 Personal</button>
+    <button class="tab-btn" onclick="showTab('config')">⚙ Config</button>
+  </div>
+  <div class="tab-content">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="section active">
+      <div id="alertas-dash"></div>
+      <div id="cumples-dash"></div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-val" id="dash-activos">0</div><div class="stat-lbl">En tienda</div></div>
+        <div class="stat-box"><div class="stat-val" id="dash-total">0</div><div class="stat-lbl">Empleados</div></div>
+        <div class="stat-box"><div class="stat-val" id="dash-hoy">0h</div><div class="stat-lbl">Horas hoy</div></div>
+        <div class="stat-box"><div class="stat-val" id="dash-semana">0h</div><div class="stat-lbl">Horas semana</div></div>
+      </div>
+      <p class="section-title">Semana actual — horas por día</p>
+      <div class="semana-grid" id="semana-grid"></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button onclick="sincronizarDesdeNube()" style="background:var(--azul);color:white;border:none;border-radius:7px;padding:7px 13px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">🔄 Sincronizar ahora</button>
+      </div>
+      <p class="section-title">En tienda ahora</p>
+      <div id="admin-activos"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div id="tab-historial" class="section">
+      <div class="card">
+        <div class="card-title">🔍 Filtrar</div>
+        <label>Empleado</label>
+        <select id="hist-emp" onchange="renderHistorial()"><option value="">Todos</option></select>
+        <div class="two-col">
+          <div><label>Desde</label><input type="date" id="hist-desde" onchange="renderHistorial()"></div>
+          <div><label>Hasta</label><input type="date" id="hist-hasta" onchange="renderHistorial()"></div>
+        </div>
+      </div>
+      <div class="card" style="border-left-color:var(--azul)">
+        <div class="card-title">✏️ Agregar registro manual</div>
+        <label>Empleado</label><select id="man-emp"></select>
+        <div class="two-col">
+          <div><label>Fecha</label><input type="date" id="man-fecha"></div>
+          <div><label>Hora</label><input type="time" id="man-hora"></div>
+        </div>
+        <label>Tipo</label>
+        <select id="man-tipo"><option value="entrada">Entrada</option><option value="salida">Salida</option></select>
+        <label>Tienda</label>
+        <select id="man-tienda">
+          <option value="El Dorado">El Dorado – Envigado</option>
+          <option value="Sofasa 1">Sofasa – Tienda 1</option>
+          <option value="Sofasa 2">Sofasa – Tienda 2</option>
+        </select>
+        <button class="btn btn-azul" onclick="agregarRegistroManual()">Agregar registro</button>
+      </div>
+      <div id="lista-historial"></div>
+    </div>
+
+    <!-- NÓMINA -->
+    <div id="tab-nomina" class="section">
+      <div class="info-box"><strong>Tarifas 2026:</strong> Ord. diurna $7.959 · Extra diurna $9.948 · Dominical $14.326 · Extra dom. $16.315 · Rec. nocturno $10.744 · Auxilio transp. $250.000/mes</div>
+      <div class="card" style="border-left-color:var(--verde)">
+        <div class="card-title">⚡ Quincena automática</div>
+        <label>Empleado</label><select id="quin-emp"><option value="">— Seleccionar —</option></select>
+        <label>Mes</label><input type="month" id="quin-mes">
+        <div class="quincena-btn">
+          <button class="btn btn-verde" onclick="generarQuincena(1)" style="margin:0">📅 1ª (1–15)</button>
+          <button class="btn btn-verde" onclick="generarQuincena(2)" style="margin:0">📅 2ª (16–fin)</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Período personalizado</div>
+        <label>Empleado</label><select id="nom-emp" onchange="calcularNomina()"><option value="">— Seleccionar —</option></select>
+        <div class="two-col">
+          <div><label>Desde</label><input type="date" id="nom-desde" onchange="calcularNomina()"></div>
+          <div><label>Hasta</label><input type="date" id="nom-hasta" onchange="calcularNomina()"></div>
+        </div>
+        <div class="auxilio-check">
+          <input type="checkbox" id="chk-auxilio" onchange="calcularNomina()" checked>
+          <label for="chk-auxilio">Incluir auxilio de transporte (por días trabajados)</label>
+        </div>
+        <div class="desc-section">
+          <h4>➖ Descuentos</h4>
+          <label>Concepto</label>
+          <div class="desc-row-input">
+            <input type="text" id="desc-concepto" placeholder="Ej: Anticipo, Daño helado...">
+            <input type="number" id="desc-valor" placeholder="$ Valor" min="0">
+            <button onclick="agregarDescuento()">+ Add</button>
+          </div>
+          <div id="lista-descuentos"></div>
+        </div>
+      </div>
+      <div id="resumen-nomina"></div>
+      <div class="card" style="border-left-color:var(--azul)">
+        <div class="card-title">📁 Nóminas guardadas</div>
+        <div id="lista-nominas-guardadas"></div>
+      </div>
+    </div>
+
+    <!-- TIENDAS -->
+    <div id="tab-tiendas" class="section">
+      <div class="tienda-tabs">
+        <button class="tienda-tab active" onclick="filtrarTienda('todas',this)">Todas</button>
+        <button class="tienda-tab" onclick="filtrarTienda('El Dorado',this)">El Dorado</button>
+        <button class="tienda-tab" onclick="filtrarTienda('Sofasa 1',this)">Sofasa 1</button>
+        <button class="tienda-tab" onclick="filtrarTienda('Sofasa 2',this)">Sofasa 2</button>
+      </div>
+      <div class="two-col" style="margin-bottom:11px">
+        <div><label>Desde</label><input type="date" id="tienda-desde" onchange="renderTiendas()"></div>
+        <div><label>Hasta</label><input type="date" id="tienda-hasta" onchange="renderTiendas()"></div>
+      </div>
+      <div id="resumen-tiendas"></div>
+    </div>
+
+    <!-- PERSONAL -->
+    <div id="tab-empleados" class="section">
+      <div class="card">
+        <div class="card-title">➕ Agregar empleado</div>
+        <div class="two-col">
+          <div><label>Nombre completo</label><input type="text" id="enombre" placeholder="María González"></div>
+          <div><label>Cédula</label><input type="text" id="ecedula" placeholder="1234567890"></div>
+        </div>
+        <div class="two-col">
+          <div><label>PIN (4 dígitos)</label><input type="password" id="epin" placeholder="••••" maxlength="4" inputmode="numeric"></div>
+          <div><label>Fecha nacimiento</label><input type="date" id="efecha-nac"></div>
+        </div>
+        <label>Tipo de contrato</label>
+        <select id="etipo"><option value="tiempo_completo">Tiempo completo</option><option value="medio_tiempo">Medio tiempo</option><option value="hora">Por hora</option></select>
+        <label>Salario mensual (COP)</label><input type="number" id="esalario" value="1423500">
+        <label>Tienda asignada</label>
+        <select id="etienda">
+          <option value="El Dorado">El Dorado – Envigado</option>
+          <option value="Sofasa 1">Sofasa – Tienda 1</option>
+          <option value="Sofasa 2">Sofasa – Tienda 2</option>
+        </select>
+        <button class="btn btn-dorado" onclick="agregarEmpleado()">Agregar empleado</button>
+      </div>
+      <p class="section-title">Empleados registrados</p>
+      <div id="lista-empleados"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="tab-config" class="section">
+      <div class="card" style="border-left-color:var(--azul)">
+        <div class="card-title">☁️ Sincronización Google Drive</div>
+        <div id="cloud-status" class="info-box">Verificando conexión...</div>
+        <button class="btn btn-azul" onclick="sincronizarDesdeNube()">🔄 Sincronizar registros desde la nube</button>
+        <button class="btn btn-outline" onclick="subirEmpleadosNube()">⬆️ Subir lista de empleados a la nube</button>
+        <div class="info-box" style="margin-top:6px;font-size:0.68rem">Los registros de entrada/salida se sincronizan automáticamente con tu Google Sheet <strong>"Don Alirio Personal"</strong>. Los PINs nunca se suben a la nube por seguridad.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔐 PIN de administrador</div>
+        <label>PIN actual</label><input type="password" id="pin-actual" placeholder="••••" maxlength="4" inputmode="numeric">
+        <label>Nuevo PIN</label><input type="password" id="pin-nuevo" placeholder="••••" maxlength="4" inputmode="numeric">
+        <label>Confirmar nuevo PIN</label><input type="password" id="pin-confirma" placeholder="••••" maxlength="4" inputmode="numeric">
+        <button class="btn btn-dorado" onclick="cambiarPinAdmin()">Cambiar PIN</button>
+        <div id="msg-pin-config" class="msg-inline msg-ok"></div>
+      </div>
+      <div class="info-box">PIN por defecto: <strong>1234</strong> · Cámbialo inmediatamente.</div>
+      <div class="card">
+        <div class="card-title">🗂 Datos locales</div>
+        <button class="btn btn-outline" onclick="exportarTodosCSV()">📊 Exportar todos los registros (CSV)</button>
+        <button class="btn btn-rojo" onclick="limpiarDatos()">🗑 Borrar todos los registros locales</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NÓMINA -->
+<div class="modal-overlay" id="modal-nomina">
+  <div class="modal-box">
+    <div class="modal-title">📄 Liquidación guardada <button class="modal-close" onclick="cerrarModal()">✕</button></div>
+    <div id="modal-nomina-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+//  CONFIGURACIÓN NUBE
+// ═══════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbyJsBi-MwqCTYiU5RSU5UavAfUKaBkw-eY49yUI8bVf9iccNimM_9WUE49pXfPf6VOl/exec';
+
+async function apiCall(payload) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+function setSyncStatus(estado) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  if(!dot||!txt) return;
+  if(estado==='ok')    { dot.className='sync-dot ok'; txt.textContent='En línea'; }
+  if(estado==='sync')  { dot.className='sync-dot syncing'; txt.textContent='Sincronizando...'; }
+  if(estado==='err')   { dot.className='sync-dot err'; txt.textContent='Sin conexión'; }
+  if(estado==='--')    { dot.className='sync-dot'; txt.textContent='--'; }
+}
+
+function showBanner(msg, tipo) {
+  const b = document.getElementById('sync-banner');
+  if(!b) return;
+  b.textContent = msg;
+  b.className = `sync-banner show ${tipo}`;
+  setTimeout(() => b.classList.remove('show'), 3500);
+}
+
+async function sincronizarDesdeNube() {
+  setSyncStatus('sync');
+  showBanner('Sincronizando con Google Drive...', '');
+
+  try {
+    // 1. Sincronizar EMPLEADOS desde la nube
+    const resEmps = await apiCall({ action: 'getEmpleados' });
+    if(resEmps.ok && Array.isArray(resEmps.data) && resEmps.data.length > 0) {
+      let empsNuevos = 0, empsActualizados = 0;
+      resEmps.data.forEach(empNube => {
+        if(!empNube.id) return;
+        const local = empleados.find(e => e.id === empNube.id);
+        if(!local) {
+          // Empleado nuevo desde la nube — conservar PIN vacío hasta que admin lo asigne
+          empleados.push({ ...empNube, pin: '', activo: true });
+          empsNuevos++;
+        } else {
+          // Actualizar datos pero conservar el PIN local
+          const pinGuardado = local.pin;
+          Object.assign(local, empNube);
+          local.pin = pinGuardado;
+          empsActualizados++;
+        }
+      });
+      if(empsNuevos > 0 || empsActualizados > 0) {
+        guardar();
+        populateSelects();
+      }
+    }
+
+    // 2. Sincronizar REGISTROS desde la nube
+    const resRegs = await apiCall({ action: 'getRegistros' });
+    let nuevosRegs = 0;
+    if(resRegs.ok && Array.isArray(resRegs.data)) {
+      resRegs.data.forEach(r => {
+        if(r.id && !registros.find(x => x.id === r.id)) {
+          registros.push(r); nuevosRegs++;
+        }
+      });
+    }
+
+    guardar();
+    setSyncStatus('ok');
+    renderDashboard();
+
+    const cs = document.getElementById('cloud-status');
+    if(cs) cs.innerHTML = `✅ Conectado · Última sync: ${new Date().toLocaleTimeString('es-CO')}<br><small>${resEmps.data ? resEmps.data.length : 0} empleado(s) · ${nuevosRegs} registro(s) nuevo(s)</small>`;
+
+    showBanner(`✅ Sincronizado — ${nuevosRegs} registro(s) y ${resEmps.data ? resEmps.data.length : 0} empleado(s) desde la nube`, 'ok');
+
+  } catch(e) {
+    setSyncStatus('err');
+    showBanner('⚠️ Sin conexión — trabajando en modo offline', 'err');
+    const cs = document.getElementById('cloud-status');
+    if(cs) cs.textContent = '⚠️ Sin conexión con Google Drive. Los datos se guardan localmente.';
+  }
+}
+
+async function subirEmpleadosNube() {
+  setSyncStatus('sync');
+  // Los PINs NUNCA se suben a la nube por seguridad
+  const empsSinPin = empleados.map(e => ({...e, pin: ''}));
+  const res = await apiCall({ action: 'guardarEmpleados', empleados: empsSinPin });
+  if(res.ok) {
+    setSyncStatus('ok');
+    showBanner('✅ Empleados guardados en Google Drive', 'ok');
+  } else {
+    setSyncStatus('err');
+    showBanner('⚠️ No se pudo subir a la nube', 'err');
+  }
+}
+
+async function enviarRegistroNube(registro) {
+  // Fire and forget — no bloquea la UI
+  apiCall({ action: 'registrar', ...registro }).then(res => {
+    if(res.ok) setSyncStatus('ok');
+    else setSyncStatus('err');
+  });
+}
+
+async function eliminarRegistroNube(id) {
+  apiCall({ action: 'eliminarRegistro', id });
+}
+
+// ═══════════════════════════════════
+//  TARIFAS 2026
+// ═══════════════════════════════════
+const T={ordinaria_diurna:7959,extra_diurna:9948,dominical_diurno:14326,extra_dom_festivo:16315,recargo_nocturno:10744,extra_nocturna:Math.round(9948*(10744/7959)),extra_dom_nocturna:Math.round(16315*(10744/7959))};
+const AUXILIO_MENSUAL=250000,DIAS_MES=30,AUXILIO_DIA=Math.round(AUXILIO_MENSUAL/DIAS_MES);
+const FESTIVOS=['2025-01-01','2025-01-06','2025-03-24','2025-04-17','2025-04-18','2025-05-01','2025-06-02','2025-06-23','2025-06-30','2025-07-07','2025-07-20','2025-08-07','2025-08-18','2025-10-13','2025-11-03','2025-11-17','2025-12-08','2025-12-25','2026-01-01','2026-01-12','2026-03-23','2026-04-02','2026-04-03','2026-05-01','2026-05-18','2026-06-08','2026-06-15','2026-06-29','2026-07-20','2026-08-07','2026-08-17','2026-10-12','2026-11-02','2026-11-16','2026-12-08','2026-12-25'];
+const ETIQUETAS={ordinaria_diurna:'Hora ordinaria diurna',recargo_nocturno:'Recargo nocturno (21-6h)',extra_diurna:'Hora extra diurna (+25%)',extra_nocturna:'Hora extra nocturna',dominical_diurno:'Dominical/festivo ordinaria',extra_dom_festivo:'Extra dominical o festivo',extra_dom_nocturna:'Extra dominical nocturna'};
+const TIPOS_NOM=['ordinaria_diurna','recargo_nocturno','extra_diurna','extra_nocturna','dominical_diurno','extra_dom_festivo','extra_dom_nocturna'];
+const TIENDAS=['El Dorado','Sofasa 1','Sofasa 2'];
+
+// ═══════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════
+let empleados=JSON.parse(localStorage.getItem('da_empleados')||'[]');
+let registros=JSON.parse(localStorage.getItem('da_registros')||'[]');
+let nominasGuardadas=JSON.parse(localStorage.getItem('da_nominas')||'[]');
+let pinAdmin=localStorage.getItem('da_pin')||'1234';
+let descuentos=[], tiendaActiva='todas';
+let empPinActual='', empSeleccionado=null, tiendaSeleccionada='';
+
+function guardar(){
+  localStorage.setItem('da_empleados',JSON.stringify(empleados));
+  localStorage.setItem('da_registros',JSON.stringify(registros));
+  localStorage.setItem('da_nominas',JSON.stringify(nominasGuardadas));
+  localStorage.setItem('da_pin',pinAdmin);
+}
+
+// ═══════════════════════════════════
+//  RELOJ
+// ═══════════════════════════════════
+function updateClocks(){
+  const now=new Date();
+  const ec=document.getElementById('emp-clock'),ed=document.getElementById('emp-date');
+  if(ec)ec.textContent=now.toLocaleTimeString('es-CO');
+  if(ed)ed.textContent=now.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+setInterval(updateClocks,1000);updateClocks();
+
+// ═══════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════
+function fmtCOP(n){return '$ '+Math.round(n).toLocaleString('es-CO');}
+function fmtH(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return `${hh}h ${mm<10?'0':''}${mm}m`;}
+function iniciales(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+function esDomFest(ts){const d=new Date(ts);return d.getDay()===0||FESTIVOS.includes(d.toISOString().slice(0,10));}
+function esNocturno(h){return h>=21||h<6;}
+function isoHoy(){return new Date().toISOString().slice(0,10);}
+function getLunes(ref){const d=ref?new Date(ref):new Date(),dia=d.getDay(),diff=dia===0?-6:1-dia,l=new Date(d);l.setDate(d.getDate()+diff);return l.toISOString().slice(0,10);}
+function showMsgInline(id,txt,tipo){const el=document.getElementById(id);if(!el)return;el.textContent=txt;el.className=`msg-inline show msg-${tipo}`;setTimeout(()=>el.classList.remove('show'),3000);}
+function showEmpMsg(id,txt,tipo){const el=document.getElementById(id);if(!el)return;el.textContent=txt;el.className=`emp-msg show msg-${tipo}`;setTimeout(()=>el.classList.remove('show'),3500);}
+
+function calcularHorasEmp(empId,desde,hasta){
+  const regs=registros.filter(r=>r.empleadoId===empId&&r.timestamp.slice(0,10)>=desde&&r.timestamp.slice(0,10)<=hasta).sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  let total=0;
+  for(let i=0;i<regs.length;i++){
+    if(regs[i].tipo==='entrada'){
+      const sal=regs.find((r,j)=>j>i&&r.tipo==='salida'&&r.timestamp.slice(0,10)===regs[i].timestamp.slice(0,10));
+      if(sal){total+=(new Date(sal.timestamp)-new Date(regs[i].timestamp))/3600000;i=regs.indexOf(sal);}
+    }
+  }
+  return total;
+}
+
+function calcularTotalesEmp(empId,desde,hasta){
+  const regs=registros.filter(r=>r.empleadoId===empId&&r.timestamp.slice(0,10)>=desde&&r.timestamp.slice(0,10)<=hasta).sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  const pares=[];
+  for(let i=0;i<regs.length;i++){
+    if(regs[i].tipo==='entrada'){
+      const sal=regs.find((r,j)=>j>i&&r.tipo==='salida'&&r.timestamp.slice(0,10)===regs[i].timestamp.slice(0,10));
+      if(sal){pares.push({entrada:new Date(regs[i].timestamp),salida:new Date(sal.timestamp)});i=regs.indexOf(sal);}
+    }
+  }
+  const tot={ordinaria_diurna:0,recargo_nocturno:0,extra_diurna:0,extra_nocturna:0,dominical_diurno:0,extra_dom_festivo:0,extra_dom_nocturna:0};
+  const diasSet=new Set();
+  pares.forEach(par=>{
+    diasSet.add(par.entrada.toISOString().slice(0,10));
+    const dom=esDomFest(par.entrada.toISOString());
+    let cursor=new Date(par.entrada),hd=0;
+    while(cursor<par.salida){
+      const sig=new Date(cursor.getTime()+3600000),fin=sig>par.salida?par.salida:sig;
+      const frac=(fin-cursor)/3600000,hora=cursor.getHours(),noct=esNocturno(hora);
+      if(dom){hd<8?(noct?tot.recargo_nocturno+=frac:tot.dominical_diurno+=frac):(noct?tot.extra_dom_nocturna+=frac:tot.extra_dom_festivo+=frac);}
+      else{hd<8?(noct?tot.recargo_nocturno+=frac:tot.ordinaria_diurna+=frac):(noct?tot.extra_nocturna+=frac:tot.extra_diurna+=frac);}
+      hd+=frac;cursor=sig;
+    }
+  });
+  return{tot,totalH:Object.values(tot).reduce((a,b)=>a+b,0),dias:diasSet.size};
+}
+
+function populateSelects(){
+  const se=document.getElementById('sel-emp');
+  se.innerHTML='<option value="">— Selecciona tu nombre —</option>';
+  empleados.filter(e=>e.activo).forEach(e=>{se.innerHTML+=`<option value="${e.id}">${e.nombre}</option>`;});
+  ['hist-emp','nom-emp','quin-emp','man-emp'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const def=id==='hist-emp'?'<option value="">Todos</option>':'<option value="">— Seleccionar —</option>';
+    sel.innerHTML=def;
+    empleados.filter(e=>e.activo).forEach(e=>{sel.innerHTML+=`<option value="${e.id}">${e.nombre} · ${e.tienda}</option>`;});
+  });
+}
+
+// ═══════════════════════════════════
+//  REGISTRO EMPLEADO
+// ═══════════════════════════════════
+function irAlPin(){
+  const empId=document.getElementById('sel-emp').value;
+  const tienda=document.getElementById('sel-tienda').value;
+  if(!empId){showEmpMsg('emp-msg-sel','Selecciona tu nombre primero','err');return;}
+  const emp=empleados.find(e=>e.id===empId);
+  if(!emp.pin){showEmpMsg('emp-msg-sel','No tienes PIN asignado. Avisa al administrador.','err');return;}
+  empSeleccionado=emp;tiendaSeleccionada=tienda;empPinActual='';
+  document.getElementById('emp-avatar-pin').textContent=iniciales(emp.nombre);
+  document.getElementById('emp-nombre-pin').textContent=emp.nombre.split(' ')[0];
+  document.getElementById('emp-pin-error').textContent='';
+  updateEmpDots();
+  document.getElementById('step-select').style.display='none';
+  document.getElementById('step-pin-emp').style.display='block';
+}
+function volverSelect(){empSeleccionado=null;empPinActual='';document.getElementById('step-select').style.display='block';document.getElementById('step-pin-emp').style.display='none';document.getElementById('sel-emp').value='';}
+function updateEmpDots(){for(let i=0;i<4;i++)document.getElementById('edot-'+i).className='pin-dot'+(i<empPinActual.length?' filled':'');}
+function empPinPress(d){if(empPinActual.length>=4)return;empPinActual+=d;updateEmpDots();}
+function empPinDel(){if(empPinActual.length>0){empPinActual=empPinActual.slice(0,-1);updateEmpDots();}}
+
+function registrarMov(tipo){
+  if(!empSeleccionado)return;
+  if(empPinActual.length<4){document.getElementById('emp-pin-error').textContent='Ingresa tu PIN completo.';return;}
+  if(empPinActual!==empSeleccionado.pin){document.getElementById('emp-pin-error').textContent='PIN incorrecto.';empPinActual='';updateEmpDots();return;}
+  document.getElementById('emp-pin-error').textContent='';
+  const hoy=isoHoy();
+  const rHoy=registros.filter(r=>r.empleadoId===empSeleccionado.id&&r.timestamp.slice(0,10)===hoy);
+  const ultimo=rHoy[rHoy.length-1];
+  if(tipo==='entrada'&&ultimo&&ultimo.tipo==='entrada'){showEmpMsg('emp-msg','Ya tienes entrada registrada.','err');empPinActual='';updateEmpDots();return;}
+  if(tipo==='salida'&&(!ultimo||ultimo.tipo==='salida')){showEmpMsg('emp-msg','No tienes entrada registrada hoy.','err');empPinActual='';updateEmpDots();return;}
+  const reg={id:Date.now().toString(),empleadoId:empSeleccionado.id,empleadoNombre:empSeleccionado.nombre,tienda:tiendaSeleccionada,tipo,timestamp:new Date().toISOString(),manual:false};
+  registros.push(reg);
+  guardar();
+  // Enviar a nube de forma silenciosa
+  enviarRegistroNube(reg);
+  const horasHoy=calcularHorasEmp(empSeleccionado.id,hoy,hoy);
+  const nom=empSeleccionado.nombre.split(' ')[0];
+  const msg=tipo==='entrada'?`✅ ¡Bienvenido/a ${nom}! Entrada registrada.`:`🚪 ¡Hasta pronto ${nom}! Salida registrada.`;
+  showEmpMsg('emp-msg',horasHoy>8?msg+` ⚠️ Llevas ${fmtH(horasHoy)} hoy`:msg,'ok');
+  setTimeout(()=>volverSelect(),2400);
+}
+
+// ═══════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showPinAdmin(){adminPinStr='';updateAdminDots();document.getElementById('admin-pin-error').textContent='';showScreen('screen-pin');}
+function goEmpleado(){showScreen('screen-empleado');}
+function logout(){showScreen('screen-empleado');}
+function showTab(t){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  const idx=['dashboard','historial','nomina','tiendas','empleados','config'].indexOf(t);
+  if(idx>=0)document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  if(t==='dashboard')renderDashboard();
+  if(t==='historial'){setDefaultDatesHist();renderHistorial();}
+  if(t==='nomina'){setDefaultDatesNomina();calcularNomina();renderNominasGuardadas();}
+  if(t==='tiendas'){setDefaultDatesTiendas();renderTiendas();}
+  if(t==='empleados')renderEmpleados();
+}
+
+// ═══════════════════════════════════
+//  PIN ADMIN
+// ═══════════════════════════════════
+let adminPinStr='';
+function updateAdminDots(){for(let i=0;i<4;i++)document.getElementById('adot-'+i).className='pin-dot'+(i<adminPinStr.length?' filled':'');}
+function adminPinPress(d){
+  if(adminPinStr.length>=4)return;adminPinStr+=d;updateAdminDots();
+  if(adminPinStr.length===4){
+    setTimeout(()=>{
+      if(adminPinStr===pinAdmin){
+        document.getElementById('admin-pin-error').textContent='';
+        showScreen('screen-admin');populateSelects();renderDashboard();showTab('dashboard');
+        setSyncStatus('sync');
+        sincronizarDesdeNube();
+      } else {
+        document.getElementById('admin-pin-error').textContent='PIN incorrecto.';
+        adminPinStr='';updateAdminDots();
+      }
+    },170);
+  }
+}
+function adminPinDel(){if(adminPinStr.length>0){adminPinStr=adminPinStr.slice(0,-1);updateAdminDots();}}
+
+// ═══════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard(){
+  const hoy=isoHoy(),lunes=getLunes();
+  let activos=0,horasHoy=0,horasSem=0,alertasExtra=[];
+  const activosList=[];
+  const cumpleHoy=empleados.filter(e=>e.fechaNac&&e.fechaNac.slice(5)===hoy.slice(5));
+  document.getElementById('cumples-dash').innerHTML=cumpleHoy.length?cumpleHoy.map(e=>`<div class="card" style="border-left-color:var(--dorado);background:#fffbf0;margin-bottom:10px"><div style="font-size:0.88rem">🎂 <strong>¡Hoy cumple años ${e.nombre.split(' ')[0]}!</strong> <span class="cumple-badge">¡Feliz día!</span></div></div>`).join(''):'';
+  empleados.filter(e=>e.activo).forEach(emp=>{
+    const rHoy=registros.filter(r=>r.empleadoId===emp.id&&r.timestamp.slice(0,10)===hoy);
+    const ultimo=rHoy[rHoy.length-1];
+    const hH=calcularHorasEmp(emp.id,hoy,hoy);
+    const hS=calcularHorasEmp(emp.id,lunes,hoy);
+    if(hH>8||hS>46)alertasExtra.push({emp,hH,hS});
+    if(ultimo&&ultimo.tipo==='entrada'){activos++;const ent=new Date(ultimo.timestamp);activosList.push({emp,horas:(new Date()-ent)/3600000,tienda:ultimo.tienda,entrada:ent});}
+    horasHoy+=hH;horasSem+=hS;
+  });
+  const alertEl=document.getElementById('alertas-dash');
+  alertEl.innerHTML=alertasExtra.length?`<div class="card" style="border-left-color:var(--rojo);margin-bottom:10px"><div class="card-title">⚠️ Alertas horas extra <span class="alerta-badge">${alertasExtra.length}</span></div>${alertasExtra.map(a=>`<div style="font-size:0.79rem;margin-bottom:3px"><strong>${a.emp.nombre.split(' ')[0]}</strong> — Hoy: ${fmtH(a.hH)}${a.hH>8?' 🔴':''} · Semana: ${fmtH(a.hS)}${a.hS>46?' 🔴':''}</div>`).join('')}</div>`:'';
+  document.getElementById('dash-activos').textContent=activos;
+  document.getElementById('dash-total').textContent=empleados.filter(e=>e.activo).length;
+  document.getElementById('dash-hoy').textContent=fmtH(horasHoy);
+  document.getElementById('dash-semana').textContent=fmtH(horasSem);
+  const diasN=['L','M','X','J','V','S','D'],lun=new Date(lunes),sg=document.getElementById('semana-grid');
+  sg.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(lun);d.setDate(lun.getDate()+i);const ds=d.toISOString().slice(0,10);
+    let hT=0;empleados.filter(e=>e.activo).forEach(emp=>{hT+=calcularHorasEmp(emp.id,ds,ds);});
+    sg.innerHTML+=`<div class="dia-box${ds===hoy?' hoy':''}${hT>8?' over':hT>0?' ok':''}"><div class="dia-nombre">${diasN[i]}</div><div class="dia-horas">${hT>0?fmtH(hT):'—'}</div></div>`;
+  }
+  document.getElementById('admin-activos').innerHTML=activosList.length?activosList.map(a=>{
+    const over=a.horas>8;
+    return `<div class="emp-row trabajando${over?' alerta':''}"><div class="emp-avatar">${iniciales(a.emp.nombre)}</div><div class="emp-info"><div class="emp-name">${a.emp.nombre}${over?` <span class="alerta-badge">+8h</span>`:''}</div><div class="emp-detail">${a.tienda} · Entró: ${a.entrada.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</div></div><div class="emp-horas${over?' over':''}">${fmtH(a.horas)}</div></div>`;
+  }).join(''):'<p style="color:var(--cafe-medio);font-size:0.82rem;text-align:center;padding:12px;">Nadie en tienda en este momento.</p>';
+}
+
+// ═══════════════════════════════════
+//  HISTORIAL + MANUAL
+// ═══════════════════════════════════
+function setDefaultDatesHist(){document.getElementById('hist-desde').value=getLunes();document.getElementById('hist-hasta').value=isoHoy();}
+function renderHistorial(){
+  const empId=document.getElementById('hist-emp').value,desde=document.getElementById('hist-desde').value,hasta=document.getElementById('hist-hasta').value;
+  let regs=[...registros].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+  if(empId)regs=regs.filter(r=>r.empleadoId===empId);
+  if(desde)regs=regs.filter(r=>r.timestamp.slice(0,10)>=desde);
+  if(hasta)regs=regs.filter(r=>r.timestamp.slice(0,10)<=hasta);
+  const cont=document.getElementById('lista-historial');
+  cont.innerHTML=regs.length?regs.map(r=>{
+    const dt=new Date(r.timestamp);
+    return `<div class="hist-item ${r.tipo}${r.manual?' manual':''}">
+      <div><div style="font-weight:600">${r.empleadoNombre}${r.manual?' <span style="font-size:0.63rem;color:var(--azul)">[manual]</span>':''}</div><div class="hist-fecha">${r.tienda}</div></div>
+      <div style="text-align:right"><div style="font-weight:700;color:${r.tipo==='entrada'?'var(--verde)':'var(--rojo)'}">${r.tipo==='entrada'?'▶ ENTRADA':'◼ SALIDA'}</div>
+      <div class="hist-fecha">${dt.toLocaleDateString('es-CO')} ${dt.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</div>
+      <button onclick="eliminarRegistro('${r.id}')" style="background:none;border:none;color:var(--rojo);font-size:0.68rem;cursor:pointer;margin-top:1px">✕ eliminar</button></div></div>`;
+  }).join(''):'<p style="color:var(--cafe-medio);font-size:0.82rem;text-align:center;padding:14px;">Sin registros en este período.</p>';
+}
+function eliminarRegistro(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  registros=registros.filter(r=>r.id!==id);guardar();
+  eliminarRegistroNube(id);
+  renderHistorial();
+}
+function agregarRegistroManual(){
+  const empId=document.getElementById('man-emp').value,fecha=document.getElementById('man-fecha').value,hora=document.getElementById('man-hora').value,tipo=document.getElementById('man-tipo').value,tienda=document.getElementById('man-tienda').value;
+  if(!empId||!fecha||!hora){alert('Completa empleado, fecha y hora.');return;}
+  const emp=empleados.find(e=>e.id===empId);
+  const reg={id:Date.now().toString(),empleadoId:empId,empleadoNombre:emp.nombre,tienda,tipo,timestamp:new Date(fecha+'T'+hora+':00').toISOString(),manual:true};
+  registros.push(reg);guardar();enviarRegistroNube(reg);renderHistorial();
+  document.getElementById('man-fecha').value='';document.getElementById('man-hora').value='';
+}
+
+// ═══════════════════════════════════
+//  DESCUENTOS
+// ═══════════════════════════════════
+function agregarDescuento(){
+  const c=document.getElementById('desc-concepto').value.trim(),v=parseFloat(document.getElementById('desc-valor').value);
+  if(!c||isNaN(v)||v<=0){alert('Ingresa concepto y valor.');return;}
+  descuentos.push({id:Date.now().toString(),concepto:c,valor:v});
+  document.getElementById('desc-concepto').value='';document.getElementById('desc-valor').value='';
+  renderDescuentos();calcularNomina();
+}
+function eliminarDescuento(id){descuentos=descuentos.filter(d=>d.id!==id);renderDescuentos();calcularNomina();}
+function renderDescuentos(){
+  const cont=document.getElementById('lista-descuentos');
+  cont.innerHTML=descuentos.length?descuentos.map(d=>`<div class="desc-item"><span>${d.concepto}</span><div style="display:flex;align-items:center;gap:5px"><span style="color:var(--rojo);font-weight:700">-${fmtCOP(d.valor)}</span><button onclick="eliminarDescuento('${d.id}')">✕</button></div></div>`).join(''):'<p style="font-size:0.72rem;color:var(--cafe-medio)">Sin descuentos adicionales.</p>';
+}
+
+// ═══════════════════════════════════
+//  NÓMINA
+// ═══════════════════════════════════
+function setDefaultDatesNomina(){
+  const hoy=new Date(),inicio=new Date(hoy.getFullYear(),hoy.getMonth(),1);
+  document.getElementById('nom-desde').value=inicio.toISOString().slice(0,10);
+  document.getElementById('nom-hasta').value=isoHoy();
+  const qm=document.getElementById('quin-mes');if(qm)qm.value=hoy.toISOString().slice(0,7);
+}
+function generarQuincena(q){
+  const empId=document.getElementById('quin-emp').value,mes=document.getElementById('quin-mes').value;
+  if(!empId||!mes){alert('Selecciona empleado y mes.');return;}
+  const[y,m]=mes.split('-').map(Number);
+  const desde=q===1?`${mes}-01`:`${mes}-16`,hasta=q===1?`${mes}-15`:`${mes}-${new Date(y,m,0).getDate()}`;
+  document.getElementById('nom-emp').value=empId;document.getElementById('nom-desde').value=desde;document.getElementById('nom-hasta').value=hasta;
+  calcularNomina();setTimeout(()=>document.getElementById('resumen-nomina').scrollIntoView({behavior:'smooth'}),100);
+}
+function calcularNomina(){
+  const empId=document.getElementById('nom-emp').value,desde=document.getElementById('nom-desde').value,hasta=document.getElementById('nom-hasta').value;
+  const incluirAuxilio=document.getElementById('chk-auxilio').checked;
+  const cont=document.getElementById('resumen-nomina');
+  if(!empId||!desde||!hasta){cont.innerHTML='';return;}
+  const emp=empleados.find(e=>e.id===empId);if(!emp)return;
+  const{tot,totalH,dias}=calcularTotalesEmp(empId,desde,hasta);
+  let subtotal=0,filasTabla='';
+  TIPOS_NOM.forEach(tipo=>{
+    const h=tot[tipo];if(h<=0)return;
+    const tarifa=T[tipo]||0,valor=tarifa*h;subtotal+=valor;
+    filasTabla+=`<tr><td>${ETIQUETAS[tipo]}</td><td style="text-align:right">${fmtH(h)}</td><td style="text-align:right">${fmtCOP(tarifa)}</td><td class="precio">${fmtCOP(valor)}</td></tr>`;
+  });
+  const auxilio=incluirAuxilio&&dias>0?Math.round(AUXILIO_DIA*dias):0;
+  const salud=subtotal*0.04,pension=subtotal*0.04,totalDesc=descuentos.reduce((a,d)=>a+d.valor,0);
+  const neto=subtotal+auxilio-salud-pension-totalDesc;
+  let fd='';
+  if(auxilio>0)fd+=`<tr class="plus-row"><td colspan="3">+ Auxilio transporte (${dias} días × ${fmtCOP(AUXILIO_DIA)})</td><td class="precio">${fmtCOP(auxilio)}</td></tr>`;
+  fd+=`<tr class="desc-row"><td colspan="3">— Salud empleado (4%)</td><td class="precio">-${fmtCOP(salud)}</td></tr>`;
+  fd+=`<tr class="desc-row"><td colspan="3">— Pensión empleado (4%)</td><td class="precio">-${fmtCOP(pension)}</td></tr>`;
+  descuentos.forEach(d=>{fd+=`<tr class="desc-row"><td colspan="3">— ${d.concepto}</td><td class="precio">-${fmtCOP(d.valor)}</td></tr>`;});
+  window._nominaActual={emp,desde,hasta,tot,totalH,dias,subtotal,auxilio,salud,pension,descuentos:[...descuentos],neto};
+  cont.innerHTML=`<div class="card"><div class="card-title">📊 ${emp.nombre}</div>
+    <div style="font-size:0.69rem;color:var(--cafe-medio);margin-bottom:9px">Período: ${desde} al ${hasta}</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val">${dias}</div><div class="stat-lbl">Días trab.</div></div>
+      <div class="stat-box"><div class="stat-val">${fmtH(totalH)}</div><div class="stat-lbl">Total horas</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:0.92rem">${fmtCOP(subtotal)}</div><div class="stat-lbl">Devengado</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:0.92rem;color:var(--verde)">${fmtCOP(neto)}</div><div class="stat-lbl">Neto a pagar</div></div>
+    </div>
+    <div class="scroll-x"><table class="nom-table">
+      <thead><tr><th>Concepto</th><th style="text-align:right">Horas</th><th style="text-align:right">$/hora</th><th style="text-align:right">Valor</th></tr></thead>
+      <tbody>${filasTabla||'<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--cafe-medio)">Sin registros completos en este período.</td></tr>'}
+      <tr class="subtotal-row"><td colspan="3"><strong>SUBTOTAL DEVENGADO</strong></td><td class="precio"><strong>${fmtCOP(subtotal)}</strong></td></tr>
+      ${fd}<tr class="neto-row"><td colspan="3"><strong>💵 NETO A PAGAR</strong></td><td class="precio"><strong>${fmtCOP(neto)}</strong></td></tr>
+      </tbody></table></div>
+    <div class="divider"></div>
+    <div class="info-box" style="font-size:0.67rem"><strong>Aportes empresa:</strong> Salud 8.5%: ${fmtCOP(subtotal*0.085)} · Pensión 12%: ${fmtCOP(subtotal*0.12)} · ARL 1%: ${fmtCOP(subtotal*0.01)} · SENA+ICBF+Caja 9%: ${fmtCOP(subtotal*0.09)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+      <button class="btn-export btn-export-excel" onclick="exportarNominaExcel()">📊 Excel</button>
+      <button class="btn-export btn-export-pdf" onclick="exportarNominaPDF()">📄 PDF</button>
+      <button class="btn-export" style="border-color:var(--cafe);color:var(--cafe);background:white" onclick="guardarNomina()">💾 Guardar</button>
+    </div></div>`;
+}
+
+// ═══════════════════════════════════
+//  NÓMINAS GUARDADAS
+// ═══════════════════════════════════
+function guardarNomina(){
+  const d=window._nominaActual;if(!d)return;
+  nominasGuardadas.unshift({id:Date.now().toString(),...d,fechaGuardado:new Date().toISOString()});
+  if(nominasGuardadas.length>50)nominasGuardadas=nominasGuardadas.slice(0,50);
+  guardar();renderNominasGuardadas();
+  showBanner(`✅ Nómina de ${d.emp.nombre} guardada`,'ok');
+}
+function renderNominasGuardadas(){
+  const cont=document.getElementById('lista-nominas-guardadas');if(!cont)return;
+  if(!nominasGuardadas.length){cont.innerHTML='<p style="font-size:0.77rem;color:var(--cafe-medio);text-align:center;padding:11px;">Sin nóminas guardadas aún.</p>';return;}
+  cont.innerHTML=nominasGuardadas.slice(0,20).map(n=>`
+    <div class="nomina-guardada" onclick="verNominaGuardada('${n.id}')">
+      <div class="nom-icon">💰</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:0.83rem">${n.emp.nombre}</div><div style="font-size:0.67rem;color:var(--cafe-medio)">${n.desde} al ${n.hasta}</div></div>
+      <div style="text-align:right"><div style="font-weight:700;font-size:0.83rem;color:var(--verde)">${fmtCOP(n.neto)}</div>
+      <button onclick="event.stopPropagation();eliminarNominaGuardada('${n.id}')" style="background:none;border:none;color:var(--rojo);font-size:0.67rem;cursor:pointer">✕</button></div>
+    </div>`).join('');
+}
+function verNominaGuardada(id){
+  const n=nominasGuardadas.find(x=>x.id===id);if(!n)return;
+  const{emp,desde,hasta,tot,totalH,dias,subtotal,auxilio,salud,pension,descuentos:descs,neto}=n;
+  let filas='';TIPOS_NOM.forEach(tipo=>{const h=tot[tipo];if(!h||h<=0)return;const tarifa=T[tipo]||0;filas+=`<tr><td>${ETIQUETAS[tipo]}</td><td>${fmtH(h)}</td><td>${fmtCOP(tarifa)}</td><td>${fmtCOP(tarifa*h)}</td></tr>`;});
+  let fd='';
+  if(auxilio>0)fd+=`<tr class="plus-row"><td colspan="3">+ Auxilio transporte</td><td class="precio">${fmtCOP(auxilio)}</td></tr>`;
+  fd+=`<tr class="desc-row"><td colspan="3">— Salud (4%)</td><td class="precio">-${fmtCOP(salud)}</td></tr>`;
+  fd+=`<tr class="desc-row"><td colspan="3">— Pensión (4%)</td><td class="precio">-${fmtCOP(pension)}</td></tr>`;
+  if(descs)descs.forEach(d=>{fd+=`<tr class="desc-row"><td colspan="3">— ${d.concepto}</td><td class="precio">-${fmtCOP(d.valor)}</td></tr>`;});
+  document.getElementById('modal-nomina-content').innerHTML=`
+    <div style="font-size:0.81rem;margin-bottom:9px"><strong>${emp.nombre}</strong> · ${desde} al ${hasta}</div>
+    <div class="stats-grid" style="margin-bottom:9px">
+      <div class="stat-box"><div class="stat-val">${dias}</div><div class="stat-lbl">Días</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:0.92rem;color:var(--verde)">${fmtCOP(neto)}</div><div class="stat-lbl">Neto</div></div>
+    </div>
+    <div class="scroll-x"><table class="nom-table">
+      <thead><tr><th>Concepto</th><th>Horas</th><th>$/h</th><th>Valor</th></tr></thead>
+      <tbody>${filas}<tr class="subtotal-row"><td colspan="3">Subtotal</td><td>${fmtCOP(subtotal)}</td></tr>
+      ${fd}<tr class="neto-row"><td colspan="3">NETO A PAGAR</td><td>${fmtCOP(neto)}</td></tr></tbody>
+    </table></div>
+    <div class="export-btns" style="margin-top:9px">
+      <button class="btn-export btn-export-excel" onclick="window._nominaActual=nominasGuardadas.find(x=>x.id==='${id}');exportarNominaExcel()">📊 Excel</button>
+      <button class="btn-export btn-export-pdf" onclick="window._nominaActual=nominasGuardadas.find(x=>x.id==='${id}');exportarNominaPDF()">📄 PDF</button>
+    </div>`;
+  document.getElementById('modal-nomina').classList.add('show');
+}
+function cerrarModal(){document.getElementById('modal-nomina').classList.remove('show');}
+function eliminarNominaGuardada(id){if(!confirm('¿Eliminar?'))return;nominasGuardadas=nominasGuardadas.filter(n=>n.id!==id);guardar();renderNominasGuardadas();}
+
+// ═══════════════════════════════════
+//  TIENDAS
+// ═══════════════════════════════════
+function filtrarTienda(t,el){tiendaActiva=t;document.querySelectorAll('.tienda-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderTiendas();}
+function setDefaultDatesTiendas(){document.getElementById('tienda-desde').value=getLunes();document.getElementById('tienda-hasta').value=isoHoy();}
+function renderTiendas(){
+  const desde=document.getElementById('tienda-desde').value,hasta=document.getElementById('tienda-hasta').value;
+  const cont=document.getElementById('resumen-tiendas');
+  const lista=tiendaActiva==='todas'?TIENDAS:[tiendaActiva];
+  let html='';
+  lista.forEach(t=>{
+    const emps=empleados.filter(e=>e.activo&&e.tienda===t);if(!emps.length)return;
+    let tH=0,tC=0;
+    const rows=emps.map(emp=>{const h=calcularHorasEmp(emp.id,desde,hasta),c=h*(emp.salario/240);tH+=h;tC+=c;
+      return `<div class="emp-row"><div class="emp-avatar">${iniciales(emp.nombre)}</div><div class="emp-info"><div class="emp-name">${emp.nombre}</div><div class="emp-detail">${fmtH(h)}</div></div><div style="text-align:right;font-size:0.77rem"><div style="font-weight:700;color:var(--cafe)">${fmtCOP(c)}</div><div style="font-size:0.63rem;color:var(--cafe-medio)">est.</div></div></div>`;
+    }).join('');
+    html+=`<div class="card"><div class="card-title">🏪 ${t}</div><div class="two-col" style="margin-bottom:9px"><div class="stat-box"><div class="stat-val">${fmtH(tH)}</div><div class="stat-lbl">Total horas</div></div><div class="stat-box"><div class="stat-val" style="font-size:0.95rem">${fmtCOP(tC)}</div><div class="stat-lbl">Costo est.</div></div></div>${rows}</div>`;
+  });
+  cont.innerHTML=html||'<p style="color:var(--cafe-medio);text-align:center;padding:14px;font-size:0.82rem;">Sin datos en este período.</p>';
+}
+
+// ═══════════════════════════════════
+//  EMPLEADOS
+// ═══════════════════════════════════
+function agregarEmpleado(){
+  const nombre=document.getElementById('enombre').value.trim(),cedula=document.getElementById('ecedula').value.trim(),pin=document.getElementById('epin').value.trim();
+  const tipo=document.getElementById('etipo').value,salario=parseFloat(document.getElementById('esalario').value),tienda=document.getElementById('etienda').value,fechaNac=document.getElementById('efecha-nac').value;
+  if(!nombre||!cedula||!pin||isNaN(salario)){alert('Completa todos los campos incluyendo el PIN.');return;}
+  if(!/^\d{4}$/.test(pin)){alert('El PIN debe ser 4 dígitos numéricos.');return;}
+  if(empleados.find(e=>e.cedula===cedula)){alert('Ya existe un empleado con esa cédula.');return;}
+  empleados.push({id:Date.now().toString(),nombre,cedula,pin,tipo,salario,tienda,fechaNac,activo:true,fechaIngreso:isoHoy()});
+  guardar();subirEmpleadosNube();populateSelects();renderEmpleados();
+  ['enombre','ecedula','epin','efecha-nac'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('esalario').value=1423500;
+}
+function cambiarPinEmp(id){
+  const el=document.getElementById('pin-emp-'+id),np=el?el.value.trim():'';
+  if(!/^\d{4}$/.test(np)){alert('El PIN debe ser 4 dígitos.');return;}
+  const emp=empleados.find(e=>e.id===id);if(!emp)return;
+  emp.pin=np;guardar();renderEmpleados();populateSelects();
+}
+function eliminarEmpleado(id){
+  if(!confirm('¿Eliminar empleado y todos sus registros?'))return;
+  empleados=empleados.filter(e=>e.id!==id);registros=registros.filter(r=>r.empleadoId!==id);
+  guardar();subirEmpleadosNube();populateSelects();renderEmpleados();
+}
+function renderEmpleados(){
+  const cont=document.getElementById('lista-empleados');
+  if(!empleados.length){cont.innerHTML='<p style="color:var(--cafe-medio);text-align:center;padding:14px;font-size:0.81rem;">Sin empleados registrados.</p>';return;}
+  const hoy=isoHoy();
+  cont.innerHTML=empleados.map(e=>{
+    const esCumple=e.fechaNac&&e.fechaNac.slice(5)===hoy.slice(5);
+    const antiguedad=e.fechaIngreso?Math.floor((new Date()-new Date(e.fechaIngreso))/(1000*60*60*24*30)):0;
+    return `<div class="emp-config-row"><div class="emp-avatar">${iniciales(e.nombre)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.83rem">${e.nombre}${esCumple?' 🎂':''}</div>
+        <div style="font-size:0.65rem;color:var(--cafe-medio)">${e.cedula} · ${e.tienda}</div>
+        <div style="font-size:0.65rem;color:var(--cafe-medio)">${fmtCOP(e.salario)}/mes · ${antiguedad}m antigüedad · ${e.pin?'<span class="pin-badge">PIN ✓</span>':'<span class="no-pin-badge">Sin PIN</span>'}</div>
+        <div style="display:flex;gap:5px;margin-top:5px;align-items:center">
+          <input type="password" id="pin-emp-${e.id}" placeholder="Nuevo PIN" maxlength="4" inputmode="numeric" style="width:94px;padding:5px 7px;border:1.5px solid var(--crema2);border-radius:6px;font-size:0.77rem;margin:0">
+          <button onclick="cambiarPinEmp('${e.id}')" style="padding:5px 9px;background:var(--dorado);color:white;border:none;border-radius:6px;font-size:0.67rem;font-weight:700;cursor:pointer;">Cambiar</button>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="eliminarEmpleado('${e.id}')">🗑</button></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+//  EXPORTAR PDF
+// ═══════════════════════════════════
+function exportarNominaPDF(){
+  const d=window._nominaActual;if(!d)return;
+  const{emp,desde,hasta,tot,totalH,dias,subtotal,auxilio,salud,pension,descuentos:descs,neto}=d;
+  let filas='';TIPOS_NOM.forEach(tipo=>{const h=tot[tipo];if(!h||h<=0)return;const tarifa=T[tipo]||0;filas+=`<tr><td>${ETIQUETAS[tipo]}</td><td>${fmtH(h)}</td><td>${fmtCOP(tarifa)}</td><td>${fmtCOP(tarifa*h)}</td></tr>`;});
+  let fd='';
+  if(auxilio>0)fd+=`<tr style="color:#2D5016"><td colspan="3">+ Auxilio de transporte (${dias} días)</td><td>${fmtCOP(auxilio)}</td></tr>`;
+  fd+=`<tr style="color:#C0392B"><td colspan="3">— Salud empleado (4%)</td><td>-${fmtCOP(salud)}</td></tr>`;
+  fd+=`<tr style="color:#C0392B"><td colspan="3">— Pensión empleado (4%)</td><td>-${fmtCOP(pension)}</td></tr>`;
+  if(descs)descs.forEach(d=>{fd+=`<tr style="color:#C0392B"><td colspan="3">— ${d.concepto}</td><td>-${fmtCOP(d.valor)}</td></tr>`;});
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nómina ${emp.nombre}</title>
+  <style>body{font-family:Arial,sans-serif;padding:24px;color:#3B1F0A;font-size:12px}h1{font-size:1.2rem;margin-bottom:2px}h2{font-size:0.85rem;color:#6B3A1F;margin-bottom:10px}
+  .row{display:flex;justify-content:space-between;margin-bottom:3px}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11px}
+  th{background:#3B1F0A;color:#F5EDD9;padding:5px 6px;text-align:left}td{padding:5px 6px;border-bottom:1px solid #EDE0C4;text-align:right}td:first-child{text-align:left}
+  .sub td{font-weight:bold;background:#F5EDD9}.neto td{font-weight:bold;background:#f0fff4;color:#2D5016;font-size:0.95rem}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}.stat{border:1px solid #EDE0C4;border-radius:5px;padding:6px;text-align:center}
+  .stat strong{display:block;font-size:0.92rem}.stat small{font-size:0.6rem;color:#6B3A1F;text-transform:uppercase}
+  .footer{margin-top:18px;border-top:2px solid #EDE0C4;padding-top:8px;font-size:10px;color:#6B3A1F}
+  </style></head><body>
+  <h1>☕ Don Alirio Café de Origen SAS</h1><h2>LIQUIDACIÓN DE NÓMINA · TARIFAS 2026</h2>
+  <div class="row"><span><strong>Empleado:</strong> ${emp.nombre}</span><span><strong>Cédula:</strong> ${emp.cedula}</span></div>
+  <div class="row"><span><strong>Tienda:</strong> ${emp.tienda}</span><span><strong>Período:</strong> ${desde} al ${hasta}</span></div>
+  <div class="grid"><div class="stat"><strong>${dias}</strong><small>Días trab.</small></div><div class="stat"><strong>${fmtH(totalH)}</strong><small>Total horas</small></div><div class="stat"><strong>${fmtCOP(subtotal)}</strong><small>Devengado</small></div><div class="stat"><strong>${fmtCOP(neto)}</strong><small>Neto a pagar</small></div></div>
+  <table><thead><tr><th>Concepto</th><th>Horas</th><th>$/hora</th><th>Valor</th></tr></thead>
+  <tbody>${filas}<tr class="sub"><td colspan="3">SUBTOTAL DEVENGADO</td><td>${fmtCOP(subtotal)}</td></tr>${fd}
+  <tr class="neto"><td colspan="3">💵 NETO A PAGAR</td><td>${fmtCOP(neto)}</td></tr></tbody></table>
+  <div class="footer"><strong>Aportes empresa:</strong> Salud 8.5%: ${fmtCOP(subtotal*0.085)} · Pensión 12%: ${fmtCOP(subtotal*0.12)} · ARL 1%: ${fmtCOP(subtotal*0.01)} · SENA+ICBF+Caja 9%: ${fmtCOP(subtotal*0.09)}<br><br>Generado: ${new Date().toLocaleString('es-CO')} · Don Alirio Café de Origen SAS</div>
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+function exportarNominaExcel(){
+  const d=window._nominaActual;if(!d)return;
+  const{emp,desde,hasta,tot,totalH,dias,subtotal,auxilio,salud,pension,descuentos:descs,neto}=d;
+  let csv='DON ALIRIO CAFÉ DE ORIGEN SAS\nLIQUIDACIÓN DE NÓMINA - TARIFAS 2026\n\n';
+  csv+=`Empleado,${emp.nombre}\nCédula,${emp.cedula}\nTienda,${emp.tienda}\nPeríodo,${desde} al ${hasta}\nDías trabajados,${dias}\nTotal horas,${fmtH(totalH)}\n\n`;
+  csv+='Concepto,Horas,Valor por hora COP,Subtotal COP\n';
+  TIPOS_NOM.forEach(tipo=>{const h=tot[tipo];if(!h||h<=0)return;const tarifa=T[tipo]||0;csv+=`"${ETIQUETAS[tipo]}",${fmtH(h)},${tarifa},${Math.round(tarifa*h)}\n`;});
+  csv+=`\nSUBTOTAL DEVENGADO,,,${Math.round(subtotal)}\n`;
+  if(auxilio>0)csv+=`"Auxilio transporte (${dias} días)",,,${Math.round(auxilio)}\n`;
+  csv+=`Salud (4%),,,-${Math.round(salud)}\nPensión (4%),,,-${Math.round(pension)}\n`;
+  if(descs)descs.forEach(d=>{csv+=`"${d.concepto}",,,-${Math.round(d.valor)}\n`;});
+  csv+=`\nNETO A PAGAR,,,${Math.round(neto)}\n\nAPORTES EMPRESA\nSalud 8.5%,,,${Math.round(subtotal*0.085)}\nPensión 12%,,,${Math.round(subtotal*0.12)}\nARL 1%,,,${Math.round(subtotal*0.01)}\nSENA+ICBF+Caja 9%,,,${Math.round(subtotal*0.09)}\n\nGenerado,${new Date().toLocaleString('es-CO')}\n`;
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Nomina_${emp.nombre.replace(/ /g,'_')}_${desde}_${hasta}.csv`;a.click();
+}
+function exportarTodosCSV(){
+  let csv='Empleado,Cédula,Tienda,Tipo,Fecha,Hora,Manual\n';
+  registros.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(r=>{
+    const emp=empleados.find(e=>e.id===r.empleadoId),dt=new Date(r.timestamp);
+    csv+=`"${r.empleadoNombre}","${emp?emp.cedula:''}","${r.tienda}","${r.tipo}","${dt.toLocaleDateString('es-CO')}","${dt.toLocaleTimeString('es-CO')}","${r.manual?'Sí':'No'}"\n`;
+  });
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`DonAlirio_Registros_${isoHoy()}.csv`;a.click();
+}
+
+// ═══════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════
+function cambiarPinAdmin(){
+  const actual=document.getElementById('pin-actual').value,nuevo=document.getElementById('pin-nuevo').value,confirma=document.getElementById('pin-confirma').value;
+  if(actual!==pinAdmin)return showMsgInline('msg-pin-config','PIN actual incorrecto','err');
+  if(!/^\d{4}$/.test(nuevo))return showMsgInline('msg-pin-config','El nuevo PIN debe ser 4 dígitos','err');
+  if(nuevo!==confirma)return showMsgInline('msg-pin-config','Los PINs no coinciden','err');
+  pinAdmin=nuevo;guardar();showMsgInline('msg-pin-config','✅ PIN actualizado','ok');
+  ['pin-actual','pin-nuevo','pin-confirma'].forEach(id=>document.getElementById(id).value='');
+}
+function limpiarDatos(){if(!confirm('¿Borrar TODOS los registros locales?'))return;registros=[];guardar();alert('Registros borrados.');}
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+if(!empleados.length){
+  empleados=[
+    {id:'1',nombre:'Laura Martínez',cedula:'1000001',pin:'1111',tipo:'tiempo_completo',salario:1423500,tienda:'El Dorado',activo:true,fechaIngreso:'2024-01-15',fechaNac:'1995-03-10'},
+    {id:'2',nombre:'Carlos Díaz',cedula:'1000002',pin:'2222',tipo:'tiempo_completo',salario:1423500,tienda:'Sofasa 1',activo:true,fechaIngreso:'2026-01-10',fechaNac:'1998-07-22'},
+    {id:'3',nombre:'Valeria Ospina',cedula:'1000003',pin:'3333',tipo:'medio_tiempo',salario:711750,tienda:'Sofasa 2',activo:true,fechaIngreso:'2026-01-10',fechaNac:'2000-05-23'},
+  ];
+  guardar();
+}
+populateSelects();
+renderDescuentos();
+</script>
+</body>
+</html>
