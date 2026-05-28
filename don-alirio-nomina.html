@@ -242,6 +242,10 @@ input:checked+.toggle-slider:before{transform:translateX(20px);}
         <button class="btn-accion btn-entrada" onclick="registrarMov('entrada')">✅ Entrada</button>
         <button class="btn-accion btn-salida" onclick="registrarMov('salida')">🚪 Salida</button>
       </div>
+      <div class="btn-grid" style="margin-top:7px">
+        <button class="btn-accion" style="background:#E8922A;color:white" onclick="registrarMov('almuerzo_salida')">🍽 Sale almuerzo</button>
+        <button class="btn-accion" style="background:#7D6608;color:white" onclick="registrarMov('almuerzo_entrada')">↩ Vuelve almuerzo</button>
+      </div>
       <button class="btn-volver" onclick="volverSelect()">← Cambiar empleado</button>
     </div>
   </div>
@@ -281,6 +285,7 @@ input:checked+.toggle-slider:before{transform:translateX(20px);}
     <button class="tab-btn" onclick="showTab('nomina')">💰 Nómina</button>
     <button class="tab-btn" onclick="showTab('tiendas')">🏪 Tiendas</button>
     <button class="tab-btn" onclick="showTab('empleados')">👤 Personal</button>
+    <button class="tab-btn" onclick="showTab('prestaciones')">📑 Prest.</button>
     <button class="tab-btn" onclick="showTab('config')">⚙ Config</button>
   </div>
   <div class="tab-content">
@@ -427,6 +432,56 @@ input:checked+.toggle-slider:before{transform:translateX(20px);}
       <div id="lista-empleados"></div>
     </div>
 
+    <!-- PRESTACIONES -->
+    <div id="tab-prestaciones" class="section">
+      <div class="info-box"><strong>Base calculo Colombia:</strong> Prima = salario/360 x dias trabajados. Cesantias = salario x dias/360. Intereses cesantias = cesantias x 12% x dias/360</div>
+      <div class="card" style="border-left-color:var(--verde)">
+        <div class="card-title">🏆 Prima de servicios</div>
+        <label>Empleado</label><select id="prima-emp" onchange="calcularPrima()"><option value="">Seleccionar</option></select>
+        <label>Periodo</label>
+        <select id="prima-periodo" onchange="calcularPrima()">
+          <option value="primer">1er semestre (1 ene - 30 jun)</option>
+          <option value="segundo">2do semestre (1 jul - 31 dic)</option>
+          <option value="custom">Personalizado (retiro)</option>
+        </select>
+        <div id="prima-custom" style="display:none">
+          <div class="two-col">
+            <div><label>Desde</label><input type="date" id="prima-desde" onchange="calcularPrima()"></div>
+            <div><label>Hasta</label><input type="date" id="prima-hasta" onchange="calcularPrima()"></div>
+          </div>
+        </div>
+        <div id="resultado-prima"></div>
+      </div>
+      <div class="card" style="border-left-color:var(--dorado)">
+        <div class="card-title">💼 Cesantias e intereses</div>
+        <label>Empleado</label><select id="ces-emp" onchange="calcularCesantias()"><option value="">Seleccionar</option></select>
+        <label>Tipo de liquidacion</label>
+        <select id="ces-tipo" onchange="calcularCesantias()">
+          <option value="anual">Anual (consignacion fondo feb)</option>
+          <option value="retiro">Liquidacion definitiva (retiro)</option>
+        </select>
+        <div class="two-col">
+          <div><label>Desde</label><input type="date" id="ces-desde" onchange="calcularCesantias()"></div>
+          <div><label>Hasta</label><input type="date" id="ces-hasta" onchange="calcularCesantias()"></div>
+        </div>
+        <div id="resultado-cesantias"></div>
+      </div>
+      <div class="card" style="border-left-color:var(--azul)">
+        <div class="card-title">🎁 Bonificaciones no salariales</div>
+        <div class="info-box" style="font-size:0.7rem">Las bonificaciones no salariales NO hacen parte de la base para liquidar prestaciones sociales ni seguridad social.</div>
+        <label>Empleado</label><select id="bono-emp"><option value="">Seleccionar</option></select>
+        <div class="two-col">
+          <div><label>Fecha</label><input type="date" id="bono-fecha"></div>
+          <div><label>Valor (COP)</label><input type="number" id="bono-valor" placeholder="Valor"></div>
+        </div>
+        <label>Concepto</label><input type="text" id="bono-concepto" placeholder="Ej: Bono cumpleanos, Bono productividad...">
+        <button class="btn btn-azul" onclick="agregarBono()">Registrar bonificacion</button>
+        <div class="divider"></div>
+        <label>Filtrar por empleado</label>
+        <select id="bono-filtro" onchange="renderBonos()"><option value="">Todos</option></select>
+        <div id="lista-bonos"></div>
+      </div>
+    </div>
     <!-- CONFIG -->
     <div id="tab-config" class="section">
       <div class="card" style="border-left-color:var(--azul)">
@@ -474,6 +529,7 @@ input:checked+.toggle-slider:before{transform:translateX(20px);}
       <div class="card">
         <div class="card-title">🗂 Datos</div>
         <button class="btn btn-outline" onclick="exportarTodosCSV()">📊 Exportar todos los registros (CSV)</button>
+        <button class="btn btn-outline" onclick="limpiarDuplicados()">🧹 Eliminar empleados duplicados</button>
         <button class="btn btn-rojo" onclick="limpiarDatos()">🗑 Borrar todos los registros</button>
       </div>
     </div>
@@ -587,36 +643,75 @@ function cerrarModal(id){document.getElementById(id).classList.remove('show');}
 function calcularHorasEmp(empId,desde,hasta){
   const regs=registros.filter(r=>r.empleadoId===empId&&r.timestamp.slice(0,10)>=desde&&r.timestamp.slice(0,10)<=hasta).sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
   let total=0;
-  for(let i=0;i<regs.length;i++){
-    if(regs[i].tipo==='entrada'){
-      const sal=regs.find((r,j)=>j>i&&r.tipo==='salida'&&r.timestamp.slice(0,10)===regs[i].timestamp.slice(0,10));
-      if(sal){total+=(new Date(sal.timestamp)-new Date(regs[i].timestamp))/3600000;i=regs.indexOf(sal);}
+  // Agrupar por dia
+  const dias={};
+  regs.forEach(r=>{const d=r.timestamp.slice(0,10);if(!dias[d])dias[d]=[];dias[d].push(r);});
+  Object.values(dias).forEach(dregs=>{
+    let horasBrutas=0,minAlmuerzo=0;
+    for(let i=0;i<dregs.length;i++){
+      if(dregs[i].tipo==='entrada'){
+        const sal=dregs.find((r,j)=>j>i&&r.tipo==='salida');
+        if(sal){horasBrutas+=(new Date(sal.timestamp)-new Date(dregs[i].timestamp))/3600000;i=dregs.indexOf(sal);}
+      }
+      if(dregs[i].tipo==='almuerzo_salida'){
+        const vuelta=dregs.find((r,j)=>j>i&&r.tipo==='almuerzo_entrada');
+        if(vuelta){minAlmuerzo+=(new Date(vuelta.timestamp)-new Date(dregs[i].timestamp))/3600000;i=dregs.indexOf(vuelta);}
+      }
     }
-  }
+    // Si registró almuerzo usar ese tiempo, si no y trabajó +6.5h descontar 1h
+    if(minAlmuerzo>0){total+=horasBrutas-minAlmuerzo;}
+    else if(horasBrutas>=6.5){total+=horasBrutas-1;}
+    else{total+=horasBrutas;}
+  });
   return total;
 }
 
 function calcularTotalesEmp(empId,desde,hasta){
   const regs=registros.filter(r=>r.empleadoId===empId&&r.timestamp.slice(0,10)>=desde&&r.timestamp.slice(0,10)<=hasta).sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
   const pares=[];
-  for(let i=0;i<regs.length;i++){
-    if(regs[i].tipo==='entrada'){
-      const sal=regs.find((r,j)=>j>i&&r.tipo==='salida'&&r.timestamp.slice(0,10)===regs[i].timestamp.slice(0,10));
-      if(sal){pares.push({entrada:new Date(regs[i].timestamp),salida:new Date(sal.timestamp)});i=regs.indexOf(sal);}
+  // Agrupar por dia para manejar almuerzo
+  const diasMap={};
+  regs.forEach(r=>{const d=r.timestamp.slice(0,10);if(!diasMap[d])diasMap[d]=[];diasMap[d].push(r);});
+  Object.values(diasMap).forEach(dregs=>{
+    let horasBrutas=0,minAlmuerzo=0,entradaRef=null,salidaRef=null;
+    for(let i=0;i<dregs.length;i++){
+      if(dregs[i].tipo==='entrada'){
+        const sal=dregs.find((r,j)=>j>i&&r.tipo==='salida');
+        if(sal){
+          if(!entradaRef)entradaRef=new Date(dregs[i].timestamp);
+          salidaRef=new Date(sal.timestamp);
+          horasBrutas+=(new Date(sal.timestamp)-new Date(dregs[i].timestamp))/3600000;
+          i=dregs.indexOf(sal);
+        }
+      }
+      if(dregs[i].tipo==='almuerzo_salida'){
+        const vuelta=dregs.find((r,j)=>j>i&&r.tipo==='almuerzo_entrada');
+        if(vuelta){minAlmuerzo+=(new Date(vuelta.timestamp)-new Date(dregs[i].timestamp))/3600000;i=dregs.indexOf(vuelta);}
+      }
     }
-  }
+    const descAlmuerzo=minAlmuerzo>0?minAlmuerzo:(horasBrutas>=6.5?1:0);
+    const horasReales=Math.max(0,horasBrutas-descAlmuerzo);
+    if(entradaRef&&salidaRef&&horasReales>0){
+      pares.push({entrada:entradaRef,salida:salidaRef,descAlmuerzo});
+    }
+  });
   const tot={ordinaria_diurna:0,recargo_nocturno:0,extra_diurna:0,extra_nocturna:0,dominical_diurno:0,extra_dom_festivo:0,extra_dom_nocturna:0};
   const diasSet=new Set();
   pares.forEach(par=>{
     diasSet.add(par.entrada.toISOString().slice(0,10));
     const dom=esDomFest(par.entrada.toISOString());
-    let cursor=new Date(par.entrada),hd=0;
+    const descAlm=par.descAlmuerzo||0;
+    let cursor=new Date(par.entrada),hd=0,hdDesc=0;
     while(cursor<par.salida){
       const sig=new Date(cursor.getTime()+3600000),fin=sig>par.salida?par.salida:sig;
-      const frac=(fin-cursor)/3600000,hora=cursor.getHours(),noct=esNocturno(hora);
-      if(dom){hd<8?(noct?tot.recargo_nocturno+=frac:tot.dominical_diurno+=frac):(noct?tot.extra_dom_nocturna+=frac:tot.extra_dom_festivo+=frac);}
-      else{hd<8?(noct?tot.recargo_nocturno+=frac:tot.ordinaria_diurna+=frac):(noct?tot.extra_nocturna+=frac:tot.extra_diurna+=frac);}
-      hd+=frac;cursor=sig;
+      let frac=(fin-cursor)/3600000;
+      // Descontar almuerzo proporcionalmente al final del día
+      const horasBrutas=(par.salida-par.entrada)/3600000;
+      const fracAjustada=horasBrutas>0?frac*(1-(descAlm/horasBrutas)):frac;
+      const hora=cursor.getHours(),noct=esNocturno(hora);
+      if(dom){hd<8?(noct?tot.recargo_nocturno+=fracAjustada:tot.dominical_diurno+=fracAjustada):(noct?tot.extra_dom_nocturna+=fracAjustada:tot.extra_dom_festivo+=fracAjustada);}
+      else{hd<8?(noct?tot.recargo_nocturno+=fracAjustada:tot.ordinaria_diurna+=fracAjustada):(noct?tot.extra_nocturna+=fracAjustada:tot.extra_diurna+=fracAjustada);}
+      hd+=fracAjustada;cursor=sig;
     }
   });
   return{tot,totalH:Object.values(tot).reduce((a,b)=>a+b,0),dias:diasSet.size};
@@ -626,7 +721,7 @@ function populateSelects(){
   const se=document.getElementById('sel-emp');
   se.innerHTML='<option value="">— Selecciona tu nombre —</option>';
   empleados.filter(e=>e.activo).forEach(e=>{se.innerHTML+=`<option value="${e.id}">${e.nombre}</option>`;});
-  ['hist-emp','nom-emp','quin-emp','man-emp','aus-emp'].forEach(id=>{
+  ['hist-emp','nom-emp','quin-emp','man-emp','aus-emp','prima-emp','ces-emp','bono-emp','bono-filtro'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const def=id==='hist-emp'?'<option value="">Todos</option>':'<option value="">— Seleccionar —</option>';
     sel.innerHTML=def;
@@ -663,12 +758,20 @@ function registrarMov(tipo){
   const ultimo=rHoy[rHoy.length-1];
   if(tipo==='entrada'&&ultimo&&ultimo.tipo==='entrada'){showEmpMsg('emp-msg','Ya tienes entrada registrada.','err');empPinActual='';updateEmpDots();return;}
   if(tipo==='salida'&&(!ultimo||ultimo.tipo==='salida')){showEmpMsg('emp-msg','No tienes entrada registrada hoy.','err');empPinActual='';updateEmpDots();return;}
+  if(tipo==='almuerzo_salida'&&(!ultimo||ultimo.tipo!=='entrada'&&ultimo.tipo!=='almuerzo_entrada')){showEmpMsg('emp-msg','Debes tener entrada registrada para salir a almorzar.','err');empPinActual='';updateEmpDots();return;}
+  if(tipo==='almuerzo_entrada'&&(!ultimo||ultimo.tipo!=='almuerzo_salida')){showEmpMsg('emp-msg','Primero registra la salida a almuerzo.','err');empPinActual='';updateEmpDots();return;}
   const reg={id:Date.now().toString(),empleadoId:empSeleccionado.id,empleadoNombre:empSeleccionado.nombre,tienda:tiendaSeleccionada,tipo,timestamp:new Date().toISOString(),manual:false};
   registros.push(reg);guardar();enviarRegistroNube(reg);
   const horasHoy=calcularHorasEmp(empSeleccionado.id,hoy,hoy);
   const nom=empSeleccionado.nombre.split(' ')[0];
   const saludo=getSaludo();
-  const msg=tipo==='entrada'?`${saludo} ${nom}! Entrada registrada.`:`🚪 ¡Hasta pronto ${nom}! Salida registrada.`;
+  const msgs={
+    'entrada':`${saludo} ${nom}! Entrada registrada.`,
+    'salida':`🚪 ¡Hasta pronto ${nom}! Salida registrada.`,
+    'almuerzo_salida':`🍽 ¡Buen provecho ${nom}! Salida a almuerzo registrada.`,
+    'almuerzo_entrada':`↩ Bienvenido/a de vuelta ${nom}!`
+  };
+  const msg=msgs[tipo]||'Registro guardado.';
   showEmpMsg('emp-msg',horasHoy>limites.diario?msg+` ⚠️ Llevas ${fmtH(horasHoy)} hoy`:msg,'ok');
   setTimeout(()=>volverSelect(),2400);
 }
@@ -682,13 +785,14 @@ function showTab(t){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  const idx=['dashboard','historial','nomina','tiendas','empleados','config'].indexOf(t);
+  const idx=['dashboard','historial','nomina','tiendas','empleados','prestaciones','config'].indexOf(t);
   if(idx>=0)document.querySelectorAll('.tab-btn')[idx].classList.add('active');
   if(t==='dashboard')renderDashboard();
   if(t==='historial'){setDefaultDatesHist();renderHistorial();}
   if(t==='nomina'){setDefaultDatesNomina();calcularNomina();renderNominasGuardadas();}
   if(t==='tiendas'){setDefaultDatesTiendas();renderTiendas();}
   if(t==='empleados')renderEmpleados();
+  if(t==='prestaciones'){initPrestaciones();}
   if(t==='config'){renderChangelog();loadLimites();}
 }
 
@@ -739,9 +843,31 @@ async function sincronizarDesdeNube(){
     if(resEmps.ok&&Array.isArray(resEmps.data)&&resEmps.data.length>0){
       resEmps.data.forEach(en=>{
         if(!en.id)return;
-        const local=empleados.find(e=>e.id===en.id);
-        if(!local){empleados.push({...en,pin:'',activo:true});}
-        else{const pin=local.pin;Object.assign(local,en);local.pin=pin;}
+        // Buscar por ID o por cédula para evitar duplicados
+        const porId=empleados.find(e=>e.id===en.id);
+        const porCedula=empleados.find(e=>e.cedula===String(en.cedula));
+        if(porId){
+          // Ya existe por ID — solo actualizar datos sin tocar el PIN
+          const pin=porId.pin;Object.assign(porId,en);porId.pin=pin;
+        } else if(porCedula){
+          // Ya existe por cédula — actualizar sin duplicar
+          const pin=porCedula.pin;Object.assign(porCedula,en);porCedula.pin=pin;
+        } else {
+          // Es nuevo — agregar sin PIN
+          empleados.push({...en,pin:'',activo:en.activo!==false});
+        }
+      });
+      // Eliminar duplicados por cédula — conservar el que tiene PIN
+      const vistos={};
+      empleados=empleados.filter(e=>{
+        if(!e.cedula)return true;
+        const key=String(e.cedula);
+        if(vistos[key]){
+          // Si el actual tiene PIN y el guardado no, reemplazar
+          if(e.pin&&!vistos[key].pin){vistos[key].pin=e.pin;}
+          return false;
+        }
+        vistos[key]=e;return true;
       });
       guardar();populateSelects();
     }
@@ -1124,6 +1250,29 @@ function cambiarPinAdmin(){
 }
 function limpiarDatos(){if(!confirm('¿Borrar TODOS los registros locales?'))return;registros=[];guardar();alert('Registros borrados.');}
 
+function limpiarDuplicados(){
+  const antes=empleados.length;
+  const vistos={};
+  const limpios=[];
+  empleados.forEach(function(e){
+    const key=String(e.cedula||e.id);
+    if(vistos[key]){
+      if(e.pin&&!vistos[key].pin){vistos[key].pin=e.pin;}
+    } else {
+      vistos[key]=e;limpios.push(e);
+    }
+  });
+  empleados=limpios;
+  guardar();populateSelects();renderEmpleados();
+  const eliminados=antes-empleados.length;
+  if(eliminados>0){
+    showBanner('Se eliminaron '+eliminados+' duplicado(s)','ok');
+    agregarLog('Duplicados eliminados: '+eliminados);
+  } else {
+    showBanner('No habia duplicados','ok');
+  }
+}
+
 // EXPORTAR PDF
 function exportarNominaPDF(){
   const d=window._nominaActual;if(!d)return;
@@ -1178,6 +1327,170 @@ function exportarTodosCSV(){
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`DonAlirio_Registros_${isoHoy()}.csv`;a.click();
 }
+
+
+// PRESTACIONES SOCIALES
+let bonificaciones=JSON.parse(localStorage.getItem('da_bonos')||'[]');
+function guardarBonos(){localStorage.setItem('da_bonos',JSON.stringify(bonificaciones));}
+
+function initPrestaciones(){
+  const hoy=new Date();
+  const pd=document.getElementById('prima-periodo');
+  if(pd&&!pd.value)pd.value=hoy.getMonth()<6?'primer':'segundo';
+  const cd=document.getElementById('ces-desde'),ch=document.getElementById('ces-hasta');
+  if(cd&&!cd.value)cd.value=hoy.getFullYear()+'-01-01';
+  if(ch&&!ch.value)ch.value=isoHoy();
+  calcularPrima();calcularCesantias();renderBonos();
+}
+
+function calcularPrima(){
+  const empId=document.getElementById('prima-emp').value;
+  const periodo=document.getElementById('prima-periodo').value;
+  const customDiv=document.getElementById('prima-custom');
+  const cont=document.getElementById('resultado-prima');
+  if(customDiv)customDiv.style.display=periodo==='custom'?'block':'none';
+  if(!empId){if(cont)cont.innerHTML='';return;}
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const hoy=new Date(),anio=hoy.getFullYear();
+  let desde,hasta;
+  if(periodo==='primer'){desde=anio+'-01-01';hasta=anio+'-06-30';}
+  else if(periodo==='segundo'){desde=anio+'-07-01';hasta=anio+'-12-31';}
+  else{
+    desde=document.getElementById('prima-desde').value;
+    hasta=document.getElementById('prima-hasta').value;
+    if(!desde||!hasta){cont.innerHTML='<p style="font-size:0.8rem;color:var(--text2)">Selecciona el periodo.</p>';return;}
+  }
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  const salBase=emp.salario||0;
+  let prima=0,detalle='';
+  if(emp.tipo==='tiempo_completo'){
+    prima=Math.round((salBase/360)*dias);
+    detalle=dias+' dias calendario x ('+fmtCOP(salBase)+' / 360)';
+  } else {
+    const horasTrab=calcularHorasEmp(empId,desde,hasta);
+    const horasEsp=emp.tipo==='medio_tiempo'?dias*4:dias*8;
+    const prop=horasEsp>0?Math.min(horasTrab/horasEsp,1):0;
+    prima=Math.round((salBase/360)*dias*prop);
+    detalle=fmtH(horasTrab)+' trabajadas / '+fmtH(horasEsp)+' esperadas = '+Math.round(prop*100)+'% x '+dias+' dias';
+  }
+  cont.innerHTML='<div style="margin-top:12px"><div class="stats-grid"><div class="stat-box"><div class="stat-val" style="font-size:1rem">'+fmtCOP(prima)+'</div><div class="stat-lbl">Prima base</div></div><div class="stat-box"><div class="stat-val" style="font-size:1rem;color:var(--verde)">'+fmtCOP(prima)+'</div><div class="stat-lbl">Total a pagar</div></div></div>'
+    +'<div class="info-box" style="font-size:0.72rem"><strong>Calculo:</strong> '+detalle+'</div>'
+    +'<div style="font-size:0.75rem;color:var(--text2);margin-bottom:10px">Periodo: '+desde+' al '+hasta+' · Salario base: '+fmtCOP(salBase)+'</div>'
+    +'<div class="export-btns"><button class="btn-export btn-export-pdf" onclick="exportarPrimaPDF(\''+empId+'\',\''+desde+'\',\''+hasta+'\','+prima+')">PDF</button>'
+    +'<button class="btn-export btn-export-excel" onclick="exportarPrimaExcel(\''+empId+'\',\''+desde+'\',\''+hasta+'\','+prima+')">Excel</button></div></div>';
+}
+
+function calcularCesantias(){
+  const empId=document.getElementById('ces-emp').value;
+  const tipo=document.getElementById('ces-tipo').value;
+  const desde=document.getElementById('ces-desde').value;
+  const hasta=document.getElementById('ces-hasta').value;
+  const cont=document.getElementById('resultado-cesantias');
+  if(!empId||!desde||!hasta){if(cont)cont.innerHTML='';return;}
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  const salBase=emp.salario||0;
+  const cesantias=Math.round(salBase*dias/360);
+  const intereses=Math.round(cesantias*0.12*dias/360);
+  const total=cesantias+intereses;
+  const tipoLabel=tipo==='anual'?'Consignacion al fondo':'Liquidacion definitiva';
+  cont.innerHTML='<div style="margin-top:12px"><div class="stats-grid"><div class="stat-box"><div class="stat-val" style="font-size:1rem">'+fmtCOP(cesantias)+'</div><div class="stat-lbl">Cesantias</div></div>'
+    +'<div class="stat-box"><div class="stat-val" style="font-size:1rem">'+fmtCOP(intereses)+'</div><div class="stat-lbl">Intereses 12%</div></div></div>'
+    +'<div class="stat-box" style="margin-bottom:12px;border-top-color:var(--verde)"><div class="stat-val" style="color:var(--verde)">'+fmtCOP(total)+'</div><div class="stat-lbl">Total - '+tipoLabel+'</div></div>'
+    +'<div class="info-box" style="font-size:0.72rem"><strong>Cesantias:</strong> '+fmtCOP(salBase)+' x '+dias+' dias / 360 = '+fmtCOP(cesantias)+'<br><strong>Intereses:</strong> '+fmtCOP(cesantias)+' x 12% x '+dias+' dias / 360 = '+fmtCOP(intereses)+'</div>'
+    +'<div class="export-btns"><button class="btn-export btn-export-pdf" onclick="exportarCesantiasPDF(\''+empId+'\',\''+desde+'\',\''+hasta+'\','+cesantias+','+intereses+')">PDF</button>'
+    +'<button class="btn-export btn-export-excel" onclick="exportarCesantiasExcel(\''+empId+'\',\''+desde+'\',\''+hasta+'\','+cesantias+','+intereses+')">Excel</button></div></div>';
+}
+
+function agregarBono(){
+  const empId=document.getElementById('bono-emp').value;
+  const fecha=document.getElementById('bono-fecha').value;
+  const valor=parseFloat(document.getElementById('bono-valor').value);
+  const concepto=document.getElementById('bono-concepto').value.trim();
+  if(!empId||!fecha||isNaN(valor)||valor<=0||!concepto){alert('Completa todos los campos.');return;}
+  const emp=empleados.find(function(e){return e.id===empId;});
+  bonificaciones.push({id:Date.now().toString(),empleadoId:empId,empleadoNombre:emp.nombre,fecha:fecha,valor:valor,concepto:concepto});
+  guardarBonos();agregarLog('Bonificacion: '+emp.nombre+' '+fmtCOP(valor));
+  document.getElementById('bono-fecha').value='';
+  document.getElementById('bono-valor').value='';
+  document.getElementById('bono-concepto').value='';
+  renderBonos();showBanner('Bonificacion registrada','ok');
+}
+
+function renderBonos(){
+  const filtro=document.getElementById('bono-filtro')?document.getElementById('bono-filtro').value:'';
+  let bonos=bonificaciones.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  if(filtro)bonos=bonos.filter(function(b){return b.empleadoId===filtro;});
+  const cont=document.getElementById('lista-bonos');if(!cont)return;
+  if(!bonos.length){cont.innerHTML='<p style="font-size:0.78rem;color:var(--text2);text-align:center;padding:12px;">Sin bonificaciones registradas.</p>';return;}
+  const total=bonos.reduce(function(a,b){return a+b.valor;},0);
+  cont.innerHTML='<div style="font-weight:700;font-size:0.82rem;color:var(--text);margin-bottom:8px">Total: '+fmtCOP(total)+'</div>'
+    +bonos.map(function(b){
+      return '<div class="hist-item" style="border-left-color:var(--azul)"><div><div style="font-weight:600">'+b.empleadoNombre+'</div><div class="hist-fecha">'+b.concepto+'</div></div>'
+        +'<div style="text-align:right"><div style="font-weight:700;color:var(--azul)">'+fmtCOP(b.valor)+'</div><div class="hist-fecha">'+b.fecha+'</div>'
+        +'<button onclick="eliminarBono(\''+b.id+'\')" style="background:none;border:none;color:var(--rojo);font-size:0.68rem;cursor:pointer">x eliminar</button></div></div>';
+    }).join('');
+}
+
+function eliminarBono(id){
+  if(!confirm('Eliminar esta bonificacion?'))return;
+  bonificaciones=bonificaciones.filter(function(b){return b.id!==id;});
+  guardarBonos();renderBonos();
+}
+
+function exportarPrimaPDF(empId,desde,hasta,prima){
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Prima '+emp.nombre+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#3B1F0A;font-size:12px}h1{font-size:1.2rem}h2{color:#6B3A1F;margin-bottom:10px}.row{display:flex;justify-content:space-between;margin-bottom:4px}.total{font-size:1.1rem;font-weight:bold;color:#2D5016;margin-top:16px}.footer{margin-top:20px;border-top:2px solid #EDE0C4;padding-top:8px;font-size:10px;color:#6B3A1F}</style></head><body>'
+    +'<h1>Don Alirio Cafe de Origen SAS</h1><h2>LIQUIDACION PRIMA DE SERVICIOS</h2>'
+    +'<div class="row"><span><strong>Empleado:</strong> '+emp.nombre+'</span><span><strong>Cedula:</strong> '+emp.cedula+'</span></div>'
+    +'<div class="row"><span><strong>Periodo:</strong> '+desde+' al '+hasta+'</span><span><strong>Dias:</strong> '+dias+'</span></div>'
+    +'<div class="row"><span><strong>Salario base:</strong></span><span>'+fmtCOP(emp.salario)+'</span></div>'
+    +'<div class="row"><span>Formula: Salario / 360 x dias</span><span>'+fmtCOP(emp.salario)+' / 360 x '+dias+'</span></div>'
+    +'<div class="total">PRIMA A PAGAR: '+fmtCOP(prima)+'</div>'
+    +'<div class="footer">Generado: '+new Date().toLocaleString('es-CO')+' · Don Alirio Cafe de Origen SAS</div>'
+    +'<'+'script>window.onload=()=>window.print();<'+'/script></body></html>';
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+function exportarPrimaExcel(empId,desde,hasta,prima){
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  let csv='DON ALIRIO CAFE DE ORIGEN SAS\nLIQUIDACION PRIMA DE SERVICIOS\n\n';
+  csv+='Empleado,'+emp.nombre+'\nCedula,'+emp.cedula+'\nPeriodo,'+desde+' al '+hasta+'\nDias,'+dias+'\nSalario base,'+emp.salario+'\n\nPrima a pagar,'+Math.round(prima)+'\n\nGenerado,'+new Date().toLocaleString('es-CO')+'\n';
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Prima_'+emp.nombre.replace(/ /g,'_')+'_'+desde+'_'+hasta+'.csv';a.click();
+}
+
+function exportarCesantiasPDF(empId,desde,hasta,cesantias,intereses){
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  const total=cesantias+intereses;
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cesantias '+emp.nombre+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#3B1F0A;font-size:12px}h1{font-size:1.2rem}h2{color:#6B3A1F;margin-bottom:10px}.row{display:flex;justify-content:space-between;margin-bottom:4px}.total{font-size:1.1rem;font-weight:bold;color:#2D5016;margin-top:16px}.footer{margin-top:20px;border-top:2px solid #EDE0C4;padding-top:8px;font-size:10px;color:#6B3A1F}</style></head><body>'
+    +'<h1>Don Alirio Cafe de Origen SAS</h1><h2>LIQUIDACION CESANTIAS E INTERESES</h2>'
+    +'<div class="row"><span><strong>Empleado:</strong> '+emp.nombre+'</span><span><strong>Cedula:</strong> '+emp.cedula+'</span></div>'
+    +'<div class="row"><span><strong>Periodo:</strong> '+desde+' al '+hasta+'</span><span><strong>Dias:</strong> '+dias+'</span></div>'
+    +'<div class="row"><span><strong>Salario base:</strong></span><span>'+fmtCOP(emp.salario)+'</span></div>'
+    +'<div class="row"><span>Cesantias (salario x dias / 360):</span><span>'+fmtCOP(cesantias)+'</span></div>'
+    +'<div class="row"><span>Intereses (12% anual):</span><span>'+fmtCOP(intereses)+'</span></div>'
+    +'<div class="total">TOTAL: '+fmtCOP(total)+'</div>'
+    +'<div class="footer">Generado: '+new Date().toLocaleString('es-CO')+' · Don Alirio Cafe de Origen SAS</div>'
+    +'<'+'script>window.onload=()=>window.print();<'+'/script></body></html>';
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+function exportarCesantiasExcel(empId,desde,hasta,cesantias,intereses){
+  const emp=empleados.find(function(e){return e.id===empId;});if(!emp)return;
+  const dias=Math.round((new Date(hasta)-new Date(desde))/(1000*60*60*24))+1;
+  let csv='DON ALIRIO CAFE DE ORIGEN SAS\nLIQUIDACION CESANTIAS E INTERESES\n\n';
+  csv+='Empleado,'+emp.nombre+'\nCedula,'+emp.cedula+'\nPeriodo,'+desde+' al '+hasta+'\nDias,'+dias+'\nSalario base,'+emp.salario+'\n\n';
+  csv+='Cesantias,'+Math.round(cesantias)+'\nIntereses (12%),'+Math.round(intereses)+'\nTotal,'+Math.round(cesantias+intereses)+'\n\nGenerado,'+new Date().toLocaleString('es-CO')+'\n';
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Cesantias_'+emp.nombre.replace(/ /g,'_')+'_'+desde+'_'+hasta+'.csv';a.click();
+}
+
 
 // INIT
 if(!empleados.length){
